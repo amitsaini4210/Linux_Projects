@@ -1,0 +1,34 @@
+Project 2: bulk user creation (Shell Script)
+******************************************************************************************************
+Script: bulk user creation
+step:1
+vim user_create.sh
+
+
+step:2 make .sh file
+#!/bin/bash
+for user in user1 user2 user3
+do
+  useradd $user
+  echo "Password@123" | passwd --stdin $user
+done
+
+
+step:3 give executable permission
+chmod +x user_create.sh
+
+
+
+step:4 execute file
+./user_create.sh
+
+
+******************************************************************************************************
+Script: bulk user deletion
+
+
+#!/bin/bash
+for user in user1 user2 user3
+do
+  userdel -rf $user
+done
