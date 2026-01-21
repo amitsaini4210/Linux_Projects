@@ -1,0 +1,33 @@
+Project 1: Linux Server Installation & Hardening
+
+🔸User & Group Management
+
+useradd amit
+passwd amit
+groupadd admin
+usermod -aG admin amit
+
+🔸 Disable Root Login (SSH)
+
+vi /etc/ssh/sshd_config
+PermitRootLogin no
+PasswordAuthentication no
+
+systemctl restart sshd
+
+🔸 SSH Key Login
+
+ssh-keygen
+ssh-copy-id amit@server_ip
+ssh-copy-id  -i  /root/.ssh/id_rsa.pub  root@ip
+
+🔸 Firewall (RHEL)
+
+systemctl enable firewalld --now
+firewall-cmd --permanent --add-service=ssh
+firewall-cmd --reload
+
+🔸 SELinux Status
+
+getenforce
+setenforce 1
