@@ -176,19 +176,21 @@ apt install --only-upgrade linux-image-generic
 8️⃣ List Installed Kernels
 dpkg --list | grep linux-image
 
-🔟 Reboot Requirement Check
+9️⃣ Reboot Requirement Check
 cat /var/run/reboot-required
 output:
 *** System restart required ***
 
-1️⃣2️⃣ Patch History Audit (Compliance)
+🔟  Patch History Audit (Compliance)
 tail /var/log/apt/history.log
 
-1️⃣3️⃣ Automatic Patching Setup
+1️⃣1️⃣ Automatic Patching Setup
 apt install unattended-upgrades
+
 dpkg-reconfigure unattended-upgrades
 output:
 yes/no
+
 systemctl status unattended-upgrades
 
 
