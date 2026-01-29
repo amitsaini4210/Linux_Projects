@@ -1,0 +1,202 @@
+ REAL PRODUCTION PATCH FLOW:==>
+
+1. Pre-patch health check
+2. Snapshot / VM backup
+3. Dry-run patch check
+4. Security patching
+5. Kernel validation
+6. Reboot (if required)
+7. Post-patch verification
+8. Audit & reporting (Logs)
+
+
+#######################################################   RHEL  #######################################################
+1️⃣ Check OS Version (Before Patching)
+cat /etc/redhat-release
+Output:
+Red Hat Enterprise Linux release 8.8 (Ootpa)
+
+2️⃣ Check Kernel Version
+uname -r
+Output:
+4.18.0-477.21.1.el8_8.x86_64
+
+3️⃣ Check Last Patch Date
+rpm -qa --last | head
+Output:
+kernel-4.18.0-477.21.1.el8_8.x86_64   Mon 22 Jan 2026
+openssl-1.1.1k-9.el8                Mon 22 Jan 2026
+
+4️⃣ Check Available Patches 
+dnf check-update
+Output:
+kernel.x86_64             4.18.0-477.27.1.el8_8
+openssl.x86_64            1:1.1.1k-10.el8
+
+5️⃣ Security-Only Patching (VERY IMPORTANT)
+dnf update --security
+Output:
+Installing:
+ kernel        x86_64   4.18.0-477.27.1.el8_8
+Transaction Summary
+Install  1 Package
+
+6️⃣ Apply Full OS Patch
+dnf update -y
+Output:
+Complete!
+
+7️⃣ Kernel-Only Patch (Production Safe)
+dnf update kernel -y
+output:
+Installed:
+ kernel-4.18.0-477.27.1.el8_8.x86_64
+
+8️⃣ List Installed Kernels
+rpm -q kernel
+output:
+kernel-4.18.0-477.21.1.el8_8.x86_64
+kernel-4.18.0-477.27.1.el8_8.x86_64
+
+9️⃣ Set Default Kernel (Rollback Ready)
+grubby --default-kernel
+output:
+/boot/vmlinuz-4.18.0-477.27.1.el8_8.x86_64
+
+Set older kernel:
+grubby --set-default /boot/vmlinuz-4.18.0-477.21.1.el8_8.x86_64
+
+remove kernal:
+dnf remove kernel-4.18.0-305.el8.x86_64
+
+🔟 Reboot Requirement Check
+needs-restarting -r
+output:
+Reboot is required to fully utilize these updates.
+
+1️⃣1️⃣ Live Kernel Patching (NO REBOOT)
+dnf install kpatch kpatch-dnf
+dnf kpatch auto
+output:
+Installed live kernel patch
+*****************************************************
+How it works (flow)
+Red Hat releases live kernel patch
+        ↓
+dnf kpatch auto
+        ↓
+Patch downloaded
+        ↓
+Patch applied to running kernel
+        ↓
+No reboot needed
+*****************************************************
+
+1️⃣2️⃣ Patch History Audit (Compliance)
+dnf history
+output:
+ID | Command        | Date
+15 | update -y      | 2026-01-22
+
+1️⃣3️⃣ Automatic Patching Setup
+dnf install dnf-automatic -y
+
+### After installation, nothing runs automatically until you configure and enable it.
+ Main config file:
+    /etc/dnf/automatic.conf
+
+ Important settings inside:
+    apply_updates = yes
+    upgrade_type = default
+    emit_via = stdio
+
+Enable automatic updates
+   systemctl enable --now dnf-automatic.timer
+   systemctl restart dnf-automatic.timer
+Check timer:
+     systemctl list-timers | grep dnf
+Check enable:
+    systemctl enable --now dnf-automatic.timer
+Check status:
+    systemctl status dnf-automatic.timer
+
+
+1️⃣4️⃣ Patch Rollback 
+dnf history undo 15
+output:
+Undo completed successfully
+
+1️⃣5️⃣ Pre-Patch Health Check 
+df -h
+free -m
+uptime
+systemctl --failed
+
+
+#######################################################   UBUNTU  #######################################################
+1️⃣ Check OS Version (Before Patching)
+lsb_release -a
+Output:
+Distributor ID: Ubuntu
+Description:    Ubuntu 22.04.3 LTS
+Release:        22.04
+Codename:       jammy
+
+2️⃣ Check Kernel Version
+uname -r
+Output:
+4.18.0-477.21.1.el8_8.x86_64
+
+3️⃣ Check Last Patch Date
+grep "upgrade " /var/log/dpkg.log | tail
+output:
+2026-01-22 upgrade openssl:amd64 3.0.2-0ubuntu1
+
+4️⃣ Check Available Patches 
+apt list --upgradable
+Output:
+openssl/jammy-updates 3.0.2-0ubuntu1 amd64 [upgradable]
+
+5️⃣ Security-Only Patching (VERY IMPORTANT)
+unattended-upgrade --dry-run
+Output:
+Packages that will be upgraded:
+  openssl
+
+6️⃣ Apply Full OS Patch
+apt update
+apt upgrade -y
+Output:
+Processing triggers for libc-bin ...
+Done.
+
+7️⃣ Kernel-Only Patch (Production Safe)
+apt install --only-upgrade linux-image-generic
+
+8️⃣ List Installed Kernels
+dpkg --list | grep linux-image
+
+🔟 Reboot Requirement Check
+cat /var/run/reboot-required
+output:
+*** System restart required ***
+
+1️⃣2️⃣ Patch History Audit (Compliance)
+tail /var/log/apt/history.log
+
+1️⃣3️⃣ Automatic Patching Setup
+apt install unattended-upgrades
+dpkg-reconfigure unattended-upgrades
+output:
+yes/no
+systemctl status unattended-upgrades
+
+
+What files are involved:
+| File                                        | Purpose                          |
+| ------------------------------------------- | -------------------------------- |
+| `/etc/apt/apt.conf.d/20auto-upgrades`       | Enables auto-updates             |
+| `/etc/apt/apt.conf.d/50unattended-upgrades` | Defines what updates are allowed |
+| `/var/log/unattended-upgrades/`             | Logs of auto updates             |
+
+
