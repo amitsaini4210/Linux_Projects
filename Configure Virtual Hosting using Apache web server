@@ -1,0 +1,218 @@
+################# Web Server Virtual Hosting 2 website using Apache:#################
+
+
+yum install httpd -y
+systemctl start  httpd
+systemctl enable httpd
+
+firewall-cmd --permanent --add-service=http
+firewall-cmd --reload
+
+####################    check kis port par runnig hai http  #################
+netstat -tunlp | grep httpd
+
+
+##################  check location of every file   #################
+grep -i -n listen  /etc/httpd/conf/httpd.conf
+grep -i -n documentroot  /etc/httpd/conf/httpd.conf
+grep -i -n directoryindex  /etc/httpd/conf/httpd.conf
+
+systemctl reload httpd
+
+################## check syntax sahi hai ya nahi  #################
+httpd -t 
+
+
+##################  Connect both machine using  /etc/hosts ###########
+vim /etc/hosts
+192.168.0.1  station1.example.com example.com
+192.168.0.2  station2.example.com example.com
+
+ping station1.example.com
+
+Connect both machine using  /etc/hosts
+
+And ping them http://192.168.0.1 , http://station1.example.com
+
+################  Configure Virtual Host Config Files  ###############
+
+echo "welcome to google site "  >>   /var/www/google/google.html    
+echo "welcome to yahoo site "   >>   /var/www/yahoo/yahoo.html
+
+################ Make Httpd.conf file  ###################
+vim /etc/httpd/conf/httpd.conf
+
+<VirtualHost 192.168.0.1:80>
+ServerAdmin root@station1.example.com
+DocumentRoot /var/www/html
+ServerName station1.example.com
+ServerAlias example.com
+</VirtualHost>
+
+<VirtualHost 192.168.0.1:80>
+ServerAdmin root@station1.example.com
+DocumentRoot /var/www/google
+DirectoryIndex google.html
+ServerName google.example.com
+ServerAlias google.com
+ErrorLog  "logs/google_access_log" combined
+CustomLog "logs/google_error_log"
+</VirtualHost>
+
+<VirtualHost 192.168.0.1:80>
+ServerAdmin root@station1.example.com
+DocumentRoot /var/www/yahoo
+DirectoryIndex yahoo.html
+ServerName yahoo.example.com
+ServerAlias yahoo.com
+ErrorLog  "logs/yahoo_access_log" combined
+CustomLog "logs/yahoo_error_log"
+</VirtualHost>
+
+<Directory /var/www/google>
+require all granted
+</Directory>
+<Directory /var/www/yahoo>
+require all granted
+</Directory>
+
+
+
+systemctl restart httpd
+systemctl enable httpd
+httpd -t
+
+################ add website in hosts file ################
+vim /etc/hosts
+
+192.168.0.1 station1.example.com  example.com
+192.168.0.1 google.example.com  google.com
+192.168.0.1 yahoo.example.com  yahoo.com
+
+
+ping google.example.com
+
+################ Check chal raha hai ya nahi  using curl  ################
+curl -i http://192.168.0.1
+curl -i http://google.example.com
+curl -i http://yahoo.example.com
+
+################# Check logs Created or not ################
+ cd /var/log/httpd
+
+
+
+#########   How we can set allow and deny rules for website browsing
+vim /etc/httpd/conf/httpd.conf
+
+<Directory /var/www/google>
+require all granted
+</Directory>
+
+<Directory /var/www/yahoo>
+require all granted
+order allow,deny
+allow from all
+deny from <ip>
+</Directory>
+
+
+################## How we can apply username and password on any website  ##################
+usermod -s /sbin/nologin <username>
+
+
+##################  Jisme Hosting website par lagana hai uss ki file me  jao Like: Google ,Yahoo   ##################
+
+cd /var/www/google/
+vim .htaccess
+
+authname        "this is my secure web page"
+authtype        basic
+authuserfile   /etc/httpd/googlepassword
+require        valid-user
+
+
+##################  Abhi Apache ko nahi bataya ki .htaccess banaya hai waha se information le lena Batana padega ##################
+##    allowoverride authconfig     --  Ye keyword  samaj jata hai ki apne .htaccess file bana di hai isse information lena hai
+
+vim /etc/httpd/conf/httpd.conf
+
+allowoverride authconfig 
+
+
+<Directory /var/www/google>
+require all granted
+</Directory>
+<Directory /var/www/yahoo>
+allowoverride authconfig
+</Directory>
+
+##################  Set password on file  ##################
+#################### /etc/httpd/googlepassword            ==name same hona chahiye as per you mention in file
+
+
+htpasswd -c -m /etc/httpd/googlepassword <username>
+
+################### second user add without   " -c "  Nahi toh previous ko format mar dega  ##################
+
+htpasswd  -m /etc/httpd/googlepassword <username>
+
+##################  Read googlepassword file ##################
+cat /etc/httpd/googlepassword
+
+
+systemctl restart httpd
+httpd -t
+
+###################### how we can run any website on any another port number##################
+###################### Change 80 to 85
+###################### Check 85 free hai ya nahi
+
+netstat -tunlp | grep 85
+netstat -tunlp | grep httpd
+
+###################### add another port in file ######################
+vim /etc/httpd/conf/httpd.conf
+Listen 85
+
+######################## add any one website on port 85 ######################
+
+<VirtualHost 192.168.0.1:85>
+ServerAdmin root@station1.example.com
+DocumentRoot /var/www/yahoo
+DirectoryIndex yahoo.html
+ServerName yahoo.example.com
+ServerAlias yahoo.com
+ErrorLog  "logs/yahoo_access_log" combined
+CustomLog "logs/yahoo_error_log"
+</VirtualHost>
+
+
+firewall-cmd --permanent --add-port=85/tcp
+firewall-cmd --reload
+
+######################  selinux me koi error hoga toh yaha dekhege
+ Tail -f /var/log/audit/audit.log 
+
+###################   open selinux  browser  ⇒ pata chal jati hai kaha error hai ⇒ gui mode hai
+Sealert -b
+
+################### check Kis kis port par allow hai selinux
+semanage port -l | grep http
+
+###################  Add port 85 in Selinux  
+semanage port -a -t http_port_t -p tcp 85
+
+################### check port added
+semanage port -l | grep http
+
+systemctl restart httpd
+
+####### Running in port  85 
+
+
+
+
+
+
+
