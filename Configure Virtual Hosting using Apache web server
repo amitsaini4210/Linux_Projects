@@ -116,10 +116,9 @@ allow from all
 deny from <ip>
 </Directory>
 
-
-################## How we can apply username and password on any website  ##################
+##################  user not enetr in shell terminal
 usermod -s /sbin/nologin <username>
-
+################## How we can apply username and password on any website  ##################
 
 ##################  Jisme Hosting website par lagana hai uss ki file me  jao Like: Google ,Yahoo   ##################
 
