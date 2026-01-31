@@ -1,4 +1,4 @@
-################# Web Server Virtual Hosting 2 website using Apache:#################
+################# Apache Web Server Virtual Hosting 2 websites #################
 
 
 yum install httpd -y
