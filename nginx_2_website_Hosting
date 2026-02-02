@@ -1,0 +1,227 @@
+Website 1 → site1.example.com
+Website 2 → site2.example.com
+Web server → Nginx
+Method → Name-based Virtual Hosting
+
+
+1️⃣ Install Nginx
+sudo dnf install nginx -y
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+✅ Verify:
+systemctl status nginx
+
+2️⃣ Create Website Directories
+sudo mkdir -p /var/www/site1
+sudo mkdir -p /var/www/site2
+
+
+Set permissions:
+sudo chown -R nginx:nginx /var/www/site1 /var/www/site2   # RHEL
+
+3️⃣ Create Test HTML Files
+
+Site 1:
+<h1>Welcome to Nginx Web Server - Site 1</h1>  >>  /var/www/site1/index.html
+
+Site 2:
+<h1>Welcome to Nginx Web Server - Site 2</h1>  >>  /var/www/site2/index.html
+
+
+
+4️⃣ Create Nginx Server Block Configs
+Create config files in:
+
+sudo vi /etc/nginx/conf.d/site1.conf
+
+server {
+    listen 80;
+    server_name site1.example.com;
+
+    root /var/www/site1;
+    index index.html;
+
+    access_log /var/log/nginx/site1.access.log;
+    error_log /var/log/nginx/site1.error.log;
+}
+
+
+site2 :
+Create config files in:
+sudo vi /etc/nginx/conf.d/site2.conf
+
+server {
+    listen 80;
+    server_name site2.example.com;
+
+    root /var/www/site2;
+    index index.html;
+
+    access_log /var/log/nginx/site2.access.log;
+    error_log /var/log/nginx/site2.error.log;
+}
+
+
+5️⃣ Test Nginx Configuration
+
+sudo nginx -t
+
+✅ Output should be:
+syntax is ok
+test is successful
+
+
+Reload Nginx:
+
+sudo systemctl reload nginx
+
+
+
+
+6️⃣ Test Websites (Without Real DNS)
+
+Method 1: Using /etc/hosts (Best for testing)
+sudo vi /etc/hosts
+
+SERVER_IP  site1.example.com
+SERVER_IP  site2.example.com
+
+
+Method 2: Curl Command Test
+curl http://site1.example.com
+curl http://site2.example.com
+
+
+Method 3: Browser Test
+
+Open browser:
+http://site1.example.com
+http://site2.example.com
+
+
+7️⃣ Firewall (If Sites Not Opening)
+
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+
+
+############# Enable HTTPS Self-Signed SSL for 2 Nginx Websites (Lab Setup)
+
+1️⃣ Create SSL Directory
+
+sudo mkdir -p /etc/nginx/ssl
+cd /etc/nginx/ssl
+
+
+2️⃣ Generate Self-Signed SSL Certificates
+
+Site 1 Certificate:
+
+sudo openssl req -x509 -nodes -days 365 \
+-newkey rsa:2048 \
+-keyout site1.key \
+-out site1.crt
+
+Common Name (CN):
+site1.local
+
+Site 2 Certificate:
+sudo openssl req -x509 -nodes -days 365 \
+-newkey rsa:2048 \
+-keyout site2.key \
+-out site2.crt
+
+
+Common Name (CN):
+site2.local
+
+3️⃣ Secure SSL Files
+
+sudo chmod 600 /etc/nginx/ssl/*
+
+
+4️⃣ Configure Nginx HTTPS Server Blocks
+Site 1 (site1.conf):
+
+server {
+    listen 443 ssl;
+    server_name site1.local;
+
+    ssl_certificate     /etc/nginx/ssl/site1.crt;
+    ssl_certificate_key /etc/nginx/ssl/site1.key;
+
+    root /var/www/site1;
+    index index.html;
+}
+
+server {
+    listen 80;
+    server_name site1.local;
+    return 301 https://$host$request_uri;
+}
+
+
+Site 2 (site2.conf):
+
+server {
+    listen 443 ssl;
+    server_name site2.local;
+
+    ssl_certificate     /etc/nginx/ssl/site2.crt;
+    ssl_certificate_key /etc/nginx/ssl/site2.key;
+
+    root /var/www/site2;
+    index index.html;
+}
+
+server {
+    listen 80;
+    server_name site2.local;
+    return 301 https://$host$request_uri;
+}
+
+5️⃣ Test & Reload Nginx
+sudo nginx -t
+sudo systemctl reload nginx
+
+
+6️⃣ Configure /etc/hosts 
+sudo vi /etc/hosts
+
+192.168.1.100 site1.local
+192.168.1.100 site2.local
+
+7️⃣ Firewall Allow HTTPS
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+
+
+8️⃣ Test HTTPS
+https://site1.local
+https://site2.local
+
+
+Curl Test:
+curl -k https://site1.local
+curl -k https://site2.local
+
+
+9️⃣ (Optional) Strong SSL Settings (Lab)
+
+Add inside server block:
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers on;
+
+
+
+
+
+
+
+
+
+
+
+
