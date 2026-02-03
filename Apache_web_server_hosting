@@ -1,45 +1,56 @@
 ################# Apache Web Server Virtual Hosting 2 websites #################
 
-
+*********************************************************************************************************
+Scenario
+Website 1 → site1.com
+Website 2 → site2.com
+Both hosted on same Apache server
+IP-based or Name-based Virtual Hosting (Name-based used)
+*********************************************************************************************************
+1️⃣ Install Apache
 yum install httpd -y
 systemctl start  httpd
 systemctl enable httpd
-
+*********************************************************************************************************
+2️⃣ Add in firewall:==>
 firewall-cmd --permanent --add-service=http
 firewall-cmd --reload
-
-####################    check kis port par runnig hai http  #################
+*********************************************************************************************************
+####################    check kis port par runnig hai http 
 netstat -tunlp | grep httpd
 
-
-##################  check location of every file   #################
+*********************************************************************************************************
+##################  check location of every file  
 grep -i -n listen  /etc/httpd/conf/httpd.conf
 grep -i -n documentroot  /etc/httpd/conf/httpd.conf
 grep -i -n directoryindex  /etc/httpd/conf/httpd.conf
 
+*********************************************************************************************************
 systemctl reload httpd
 
-################## check syntax sahi hai ya nahi  #################
+*********************************************************************************************************
+################## check syntax sahi hai ya nahi  
 httpd -t 
 
-
-##################  Connect both machine using  /etc/hosts ###########
+*********************************************************************************************************
+##################  Connect both machine using  /etc/hosts 
 vim /etc/hosts
-192.168.0.1  station1.example.com example.com
-192.168.0.2  station2.example.com example.com
-
+192.168.0.1  station1.example.com    example.com
+192.168.0.2  station2.example.com    example.com
+*********************************************************************************************************
 ping station1.example.com
-
+*********************************************************************************************************
 Connect both machine using  /etc/hosts
 
 And ping them http://192.168.0.1 , http://station1.example.com
+*********************************************************************************************************
 
-################  Configure Virtual Host Config Files  ###############
+################  Configure Virtual Host Config Files  
 
 echo "welcome to google site "  >>   /var/www/google/google.html    
 echo "welcome to yahoo site "   >>   /var/www/yahoo/yahoo.html
-
-################ Make Httpd.conf file  ###################
+*********************************************************************************************************
+################ Make Httpd.conf file  
 vim /etc/httpd/conf/httpd.conf
 
 <VirtualHost 192.168.0.1:80>
@@ -76,31 +87,31 @@ require all granted
 require all granted
 </Directory>
 
-
+*********************************************************************************************************
 
 systemctl restart httpd
 systemctl enable httpd
 httpd -t
-
-################ add website in hosts file ################
+*********************************************************************************************************
+################ Add website in hosts file 
 vim /etc/hosts
 
 192.168.0.1 station1.example.com  example.com
 192.168.0.1 google.example.com  google.com
 192.168.0.1 yahoo.example.com  yahoo.com
 
-
+*********************************************************************************************************
 ping google.example.com
-
-################ Check chal raha hai ya nahi  using curl  ################
+*********************************************************************************************************
+################ Check chal raha hai ya nahi  using curl  
 curl -i http://192.168.0.1
 curl -i http://google.example.com
 curl -i http://yahoo.example.com
-
-################# Check logs Created or not ################
+*********************************************************************************************************
+################# Check logs Created or not 
  cd /var/log/httpd
 
-
+*********************************************************************************************************
 
 #########   How we can set allow and deny rules for website browsing
 vim /etc/httpd/conf/httpd.conf
@@ -115,12 +126,14 @@ order allow,deny
 allow from all
 deny from <ip>
 </Directory>
-
+*********************************************************************************************************
 ##################  user not enetr in shell terminal
 usermod -s /sbin/nologin <username>
-################## How we can apply username and password on any website  ##################
+*********************************************************************************************************
 
-##################  Jisme Hosting website par lagana hai uss ki file me  jao Like: Google ,Yahoo   ##################
+################## How we can apply username and password on any website  
+
+##################  Jisme Hosting website par lagana hai uss ki file me  jao Like: Google ,Yahoo   
 
 cd /var/www/google/
 vim .htaccess
@@ -129,15 +142,12 @@ authname        "this is my secure web page"
 authtype        basic
 authuserfile   /etc/httpd/googlepassword
 require        valid-user
+*********************************************************************************************************
 
-
-##################  Abhi Apache ko nahi bataya ki .htaccess banaya hai waha se information le lena Batana padega ##################
-##    allowoverride authconfig     --  Ye keyword  samaj jata hai ki apne .htaccess file bana di hai isse information lena hai
+##################  Abhi Apache ko nahi bataya ki .htaccess banaya hai waha se information le lena Batana padega 
+##################    allowoverride authconfig     --  Ye keyword  samaj jata hai ki apne .htaccess file bana di hai isse information lena hai
 
 vim /etc/httpd/conf/httpd.conf
-
-allowoverride authconfig 
-
 
 <Directory /var/www/google>
 require all granted
