@@ -1,14 +1,16 @@
 
-############  Hosted multiple websites using Nginx virtual hosting. Configured separate server blocks, document roots, access/error logs, firewall rules, and tested using hosts file and curl.
-##########   Implemented self-signed SSL certificates for multiple Nginx virtual hosts in a lab environment. Configured HTTPS (443), HTTP to HTTPS redirection, SSL key management, and tested using hosts file and curl.
+##################     Hosted multiple websites using Nginx virtual hosting. Configured separate server blocks, document roots, access/error logs, firewall rules, and tested using hosts file and curl.
+##################     Implemented self-signed SSL certificates for multiple Nginx virtual hosts in a lab environment. Configured HTTPS (443), HTTP to HTTPS redirection, SSL key management, and tested using hosts file and curl.
 
-********************************************
+
+********************************************************************************************
+Project Scenario:
 Website 1 → site1.example.com
 Website 2 → site2.example.com
 Web server → Nginx
 Method → Name-based Virtual Hosting
 
-******************************************
+******************************************************************************************
 1️⃣ Install Nginx
  dnf install nginx -y
  systemctl enable nginx
@@ -16,7 +18,7 @@ Method → Name-based Virtual Hosting
 
 ✅ Verify:
 systemctl status nginx
-
+************************************************************************************************
 2️⃣ Create Website Directories
  mkdir -p /var/www/site1
  mkdir -p /var/www/site2
@@ -25,7 +27,7 @@ systemctl status nginx
 Set permissions:
  chown -R nginx:nginx /var/www/site1 
  chown -R nginx:nginx /var/www/site2
-
+************************************************************************************************
 3️⃣ Create Test HTML Files
 
 Site 1:
@@ -35,13 +37,11 @@ Site 2:
 <h1>Welcome to Nginx Web Server - Site 2</h1>  >>  /var/www/site2/index.html
 
 
-
+************************************************************************************************
 4️⃣ Create Nginx Server Block Configs
 Create config files in:
 vim /etc/nginx/conf.d/site1.conf
-
-****************
-
+************************************************************************************************
 server {
     listen 80;
     server_name site1.example.com;
@@ -53,11 +53,10 @@ server {
     error_log /var/log/nginx/site1.error.log;
 }
 
-****************
-
+************************************************************************************************
 site2 :
 Create config files in:
-sudo vi /etc/nginx/conf.d/site2.conf
+vim /etc/nginx/conf.d/site2.conf
 
 server {
     listen 80;
@@ -70,22 +69,22 @@ server {
     error_log /var/log/nginx/site2.error.log;
 }
 
-
-5️⃣ Test Nginx Configuration
+************************************************************************************************
+5️⃣ Test Nginx Configuration:
 
  nginx -t
+
 
 ✅ Output should be:
 syntax is ok
 test is successful
 
-
+************************************************************************************************
 Reload Nginx:
+
 systemctl reload nginx
 
-
-
-
+************************************************************************************************
 6️⃣ Test Websites (Without Real DNS)
 
 Method 1: Using /etc/hosts (Best for testing)
@@ -106,55 +105,64 @@ Open browser:
 http://site1.example.com
 http://site2.example.com
 
-
+************************************************************************************************
 7️⃣ Firewall (If Sites Not Opening)
 
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
 firewall-cmd --reload
+************************************************************************************************
 
 
-############# Enable HTTPS Self-Signed SSL for 2 Nginx Websites (Lab Setup)
+
+
+
+
+
+
+#############  Enable HTTPS Self-Signed SSL for 2 Nginx Websites (Lab Setup)
 
 1️⃣ Create SSL Directory
 
 sudo mkdir -p /etc/nginx/ssl
 cd /etc/nginx/ssl
-
+************************************************************************************************
 
 2️⃣ Generate Self-Signed SSL Certificates
 
-Site 1 Certificate:
+Site 1 Certificate:==>
 
 openssl req -x509 -nodes -days 365 \
 -newkey rsa:2048 \
 -keyout site1.key \
 -out site1.crt
 
+###### give site name and some important information
 Common Name (CN):
-site1.local
+site1.example.com
 
-Site 2 Certificate:
+Site 2 Certificate:==>
+
 sudo openssl req -x509 -nodes -days 365 \
 -newkey rsa:2048 \
 -keyout site2.key \
 -out site2.crt
 
-
+###### give site name and some important information
 Common Name (CN):
-site2.local
-
+site2.example.com
+************************************************************************************************
 3️⃣ Secure SSL Files
 
 sudo chmod 600 /etc/nginx/ssl/*
 
-
+************************************************************************************************
 4️⃣ Configure Nginx HTTPS Server Blocks
 Site 1 (site1.conf):
 
 server {
     listen 443 ssl;
-    server_name site1.local;
+    server_name site1.example.com;
 
     ssl_certificate     /etc/nginx/ssl/site1.crt;
     ssl_certificate_key /etc/nginx/ssl/site1.key;
@@ -168,16 +176,16 @@ server {
 
 server {
     listen 80;
-    server_name site1.local;
+    server_name site1.example.com;
     return 301 https://$host$request_uri;
 }
 
-
+************************************************************************************************
 Site 2 (site2.conf):
 
 server {
     listen 443 ssl;
-    server_name site2.local;
+    server_name site2.example.com;
 
     ssl_certificate     /etc/nginx/ssl/site2.crt;
     ssl_certificate_key /etc/nginx/ssl/site2.key;
@@ -191,39 +199,42 @@ server {
 
 server {
     listen 80;
-    server_name site2.local;
+    server_name site2.example.com;
     return 301 https://$host$request_uri;
 }
-
+************************************************************************************************
 5️⃣ Test & Reload Nginx
+
 nginx -t
 systemctl reload nginx
 
-
+************************************************************************************************
 6️⃣ Configure /etc/hosts 
 vim /etc/hosts
 
-192.168.1.100 site1.local
-192.168.1.100 site2.local
-
+192.168.1.100     site1.example.com
+192.168.1.100     site2.example.com
+************************************************************************************************
 7️⃣ Firewall Allow HTTPS
 firewall-cmd --permanent --add-service=https
 firewall-cmd --reload
-
+************************************************************************************************
 
 8️⃣ Test HTTPS
-https://site1.local
-https://site2.local
+https://site1.example.com
+https://site2.example.com
 
 
 Curl Test:
-curl -k https://site1.local
-curl -k https://site2.local
+curl -k https://site1.example.com
+curl -k https://site2.example.com
+************************************************************************************************
 
 
-🔁 Redirect HTTP to HTTPS in Nginx  for both website 
 
 
+
+#####################  Redirect HTTP to HTTPS in Nginx  for both website 
 Site 1 (site1.conf):
 
 server {
@@ -246,7 +257,7 @@ server {
     return 301 https://site1.example.com$request_uri;
 }
 
-
+************************************************************************************************
 Site 2 (site2.conf):
 
 server {
@@ -270,8 +281,10 @@ server {
 }
 
 
-Test HTTP → HTTPS Redirect
-Curl Test
+************************************************************************************************
+
+#############################   Test HTTP → HTTPS Redirect
+############################    Curl Test
 
 curl -I http://site1.example.com
 
@@ -280,7 +293,7 @@ Expected Output:
 HTTP/1.1 301 Moved Permanently
 Location: https://site1.example.com/
 
-
+************************************************************************************************
 
 
 
