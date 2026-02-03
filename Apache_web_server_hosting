@@ -127,13 +127,14 @@ allow from all
 deny from <ip>
 </Directory>
 *********************************************************************************************************
-##################  user not enetr in shell terminal
+##################  User Not Enetr in shell terminal
+
 usermod -s /sbin/nologin <username>
 *********************************************************************************************************
 
 ################## How we can apply username and password on any website  
 
-##################  Jisme Hosting website par lagana hai uss ki file me  jao Like: Google ,Yahoo   
+##################  Jis Hosting website par lagana hai uss ki file me  jao Like: Google ,Yahoo   
 
 cd /var/www/google/
 vim .htaccess
@@ -151,40 +152,42 @@ vim /etc/httpd/conf/httpd.conf
 
 <Directory /var/www/google>
 require all granted
-</Directory>
-<Directory /var/www/yahoo>
 allowoverride authconfig
+</Directory>
+
+<Directory /var/www/yahoo>
+
 </Directory>
 
 ##################  Set password on file  ##################
 #################### /etc/httpd/googlepassword            ==name same hona chahiye as per you mention in file
 
+*********************************************************************************************************
+### Add user in password protected website
 
-htpasswd -c -m /etc/httpd/googlepassword <username>
-
-################### second user add without   " -c "  Nahi toh previous ko format mar dega  ##################
-
-htpasswd  -m /etc/httpd/googlepassword <username>
-
-##################  Read googlepassword file ##################
+htpasswd -c -m /etc/httpd/googlepassword <username>                                                         
+htpasswd  -m /etc/httpd/googlepassword <username>           ######## second user add without   " -c "  Nahi toh previous ko format mar dega  
+*********************************************************************************************************
+##################  Read googlepassword file 
 cat /etc/httpd/googlepassword
 
-
+*********************************************************************************************************
 systemctl restart httpd
 httpd -t
+*********************************************************************************************************
 
-###################### how we can run any website on any another port number##################
+###################### how we can run any website on any another port number
 ###################### Change 80 to 85
 ###################### Check 85 free hai ya nahi
 
 netstat -tunlp | grep 85
 netstat -tunlp | grep httpd
 
-###################### add another port in file ######################
+###################### add another port in file 
 vim /etc/httpd/conf/httpd.conf
 Listen 85
 
-######################## add any one website on port 85 ######################
+######################## add any one website on port 85 
 
 <VirtualHost 192.168.0.1:85>
 ServerAdmin root@station1.example.com
@@ -195,29 +198,35 @@ ServerAlias yahoo.com
 ErrorLog  "logs/yahoo_access_log" combined
 CustomLog "logs/yahoo_error_log"
 </VirtualHost>
-
-
+*********************************************************************************************************
+#########################################   add port in firewall
 firewall-cmd --permanent --add-port=85/tcp
 firewall-cmd --reload
-
+*********************************************************************************************************
 ######################  selinux me koi error hoga toh yaha dekhege
  Tail -f /var/log/audit/audit.log 
-
+*********************************************************************************************************
 ###################   open selinux  browser  ⇒ pata chal jati hai kaha error hai ⇒ gui mode hai
 Sealert -b
-
+*********************************************************************************************************
 ################### check Kis kis port par allow hai selinux
-semanage port -l | grep http
 
+semanage port -l | grep http
+*********************************************************************************************************
 ###################  Add port 85 in Selinux  
+
 semanage port -a -t http_port_t -p tcp 85
-
+*********************************************************************************************************
 ################### check port added
+
 semanage port -l | grep http
-
+*********************************************************************************************************
 systemctl restart httpd
-
+*********************************************************************************************************
 ####### Running in port  85 
+
+*********************************************************************************************************
+
 
 
 
