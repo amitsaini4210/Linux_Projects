@@ -111,13 +111,7 @@ http://site2.example.com
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
 firewall-cmd --reload
-************************************************************************************************
-
-
-
-
-
-
+************************************************************************************************************************************************************************************************************************************************************************
 
 
 #############  Enable HTTPS Self-Signed SSL for 2 Nginx Websites (Lab Setup)
@@ -159,6 +153,7 @@ sudo chmod 600 /etc/nginx/ssl/*
 ************************************************************************************************
 4️⃣ Configure Nginx HTTPS Server Blocks
 Site 1 (site1.conf):
+vim /etc/nginx/conf.d/site1.conf    
 
 server {
     listen 443 ssl;
@@ -181,6 +176,7 @@ server {
 }
 
 ************************************************************************************************
+vim /etc/nginx/conf.d/site2.conf
 Site 2 (site2.conf):
 
 server {
@@ -212,15 +208,17 @@ systemctl reload nginx
 6️⃣ Configure /etc/hosts 
 vim /etc/hosts
 
-192.168.1.100     site1.example.com
-192.168.1.100     site2.example.com
+192.168.0.1     site1.example.com
+192.168.0.1     site2.example.com
 ************************************************************************************************
 7️⃣ Firewall Allow HTTPS
+
 firewall-cmd --permanent --add-service=https
 firewall-cmd --reload
 ************************************************************************************************
 
 8️⃣ Test HTTPS
+
 https://site1.example.com
 https://site2.example.com
 
@@ -228,13 +226,11 @@ https://site2.example.com
 Curl Test:
 curl -k https://site1.example.com
 curl -k https://site2.example.com
-************************************************************************************************
+****************************************************************************************************************************************************************************************************************************************************************
 
+####### Redirect HTTP to HTTPS in Nginx  for both website 
 
-
-
-
-#####################  Redirect HTTP to HTTPS in Nginx  for both website 
+vim /etc/nginx/conf.d/site1.conf
 Site 1 (site1.conf):
 
 server {
@@ -258,6 +254,7 @@ server {
 }
 
 ************************************************************************************************
+vim /etc/nginx/conf.d/site1.conf
 Site 2 (site2.conf):
 
 server {
@@ -283,8 +280,8 @@ server {
 
 ************************************************************************************************
 
-#############################   Test HTTP → HTTPS Redirect
-############################    Curl Test
+#############   Test HTTP → HTTPS Redirect
+#############    Curl Test
 
 curl -I http://site1.example.com
 
