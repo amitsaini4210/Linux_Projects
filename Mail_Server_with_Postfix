@@ -74,7 +74,7 @@ mail_location = maildir:~/Maildir
 
 
 vim /etc/dovecot/conf.d/10-auth.conf
- plaintext auth = no                  ##uncomment and change from yes to no
+ disable_plaintext_auth = no                  ##uncomment and change from yes to no
 
 
 systemctl restart dovecot
