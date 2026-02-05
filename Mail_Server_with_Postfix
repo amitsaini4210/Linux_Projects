@@ -23,17 +23,134 @@ systemctl status postfix
 2️⃣ Configure Postfix (Main Config)
 sudo vim /etc/postfix/main.cf
 
-myhostname = mail.example.com
+myhostname = mail.example.com             --(station1.example.com)
 mydomain = example.com
 myorigin = $mydomain
 
 inet_interfaces = all
 inet_protocols = ipv4
 
-mydestination = localhost
+mydestination = $myhostname,localhost.$mydomain,localhost,$mydomain
 relayhost = [smtp.gmail.com]:587
+
+mynetworks= ....
 ******************************************************************************************
 
+systemctl restart Postfix
+systemctl enable Postfix
+
+
+netstat -tunlp |grep 25
+
+
+🔐 Firewall Configuration
+sudo firewall-cmd --permanent --add-service=smtp
+sudo firewall-cmd --reload
+
+
+##show which Mail Transfer Agent (MTA) is currently set
+alternatives --display mta
+
+******************************************************************************************
+install MDA protocals (POP  , IMAP)
+
+
+8️⃣ Add Dovecot (IMAP / POP3)
+Install:
+sudo dnf install -y dovecot*
+
+sudo vim /etc/dovecot/dovecot.conf
+
+Uncomment:
+protocols = imap pop3
+
+Enable:
+sudo systemctl enable --now dovecot
+
+
+
+vim /etc/dovecot/conf.d/10-mail.conf
+mail_location = maildir:~/Maildir
+
+
+vim /etc/dovecot/conf.d/10-auth.conf
+ plaintext auth = no                  ##uncomment and change from yes to no
+
+
+systemctl restart dovecot
+systemctl enable dovecot
+
+
+🔐 Firewall Configuration
+
+sudo firewall-cmd --permanent --add-service=imap          (using port: --add-port=143/tcp)
+sudo firewall-cmd --permanent --add-service=pop3          (using port: --add-port=110/tcp)
+sudo firewall-cmd --reload
+******************************************************************************************
+
+7️⃣ Send & Receive Emails (Local Users)
+Create user:
+sudo useradd sachin
+sudo passwd sachin
+
+*********************************
+send mail  method 1: 
+echo "  hello guys, this is testing mail "  | mail -s "testing ok or not"  sachin@station1.example.com
+
+
+Read mail:
+su - sachin
+mail
+
+
+
+  ⇒  complete information of all mails
+Ls -lrt 
+
+
+
+******************************************************************************************
+
+In machine-2
+Make local mailing system
+
+yum install sendmail* -y
+
+
+🔐 Firewall Configuration
+sudo firewall-cmd --permanent --add-service=smtp
+sudo firewall-cmd --reload
+
+
+systemctl restart sendmail
+systemctl enable sendmail
+
+
+netstat -tunlp |grep 25
+
+
+send mail  
+echo " from station 2 "  | mail -s "testing from station 2"  root@station1.example.com
+
+
+
+
+******************************************************************************************
+Yum install mutt -y 
+
+Mutt          ⇒ mail folder banayega 
+                       send mail any user
+
+Mail folder me mail aa jayega
+
+
+******************************************************************************************
+Thunderbird  ⇒ read msg gui mode
+
+Yum install thunderbird -y
+
+set thunderbird email with my local postic server
+******************************************************************************************
 3️⃣ SMTP Relay Using Gmail (Production Skill ⭐)
 
 
@@ -117,25 +234,6 @@ Read mail:
 su - amit
 mail
 ******************************************************************************************
-8️⃣ Add Dovecot (IMAP / POP3)
-Install:
-sudo dnf install -y dovecot
-
-sudo vim /etc/dovecot/dovecot.conf
-
-Uncomment:
-protocols = imap pop3
-
-Enable:
-sudo systemctl enable --now dovecot
-******************************************************************************************
-***************
-Ports used:
-IMAP → 143
-POP3 → 110
-
-*****************
-******************************************************************************************
 9️⃣ Basic Spam Protection (SpamAssassin)
 Install:
 sudo dnf install -y spamassassin
@@ -147,11 +245,7 @@ Basic check:
 spamassassin --lint
 
 ******************************************************************************************
-🔐 Firewall Configuration
-sudo firewall-cmd --permanent --add-service=smtp
-sudo firewall-cmd --permanent --add-service=imap
-sudo firewall-cmd --permanent --add-service=pop3
-sudo firewall-cmd --reload
+
 
 ******************************************************************************************
 
