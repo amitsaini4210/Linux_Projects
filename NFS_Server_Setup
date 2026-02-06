@@ -1,0 +1,115 @@
+NFS Server Setup  ::
+******************************************************************************************************************************************************************************************
+
+Step 1: Install NFS
+
+yum install nfs* -y
+
+
+
+Step 2: Configure Export
+
+vim /etc/exports
+/sharedata        *(ro,sync)
+/publicshare     192.168.0.20/24(ro,sync,no_root_squash)                     (no_root_squash        --Client’s root user remains root on the server.)
+/privateshare     192.168.0.20/24(rw,sync,root_squash)                       (root_squash           --Client’s root user not remains root on the server.)
+
+*****************************************************
+
+Refresh exports file ⇒
+exportsfs -r 
+
+*****************************************************
+show shared folder⇒
+exportsfs
+*****************************************************
+
+systemctl start nfs-server
+systemctl enable nfs-server
+*****************************************************
+
+Step 3:
+Firewall:
+firewall-cmd --permanent --add-service=nfs
+firewall-cmd --permanent --add-service=mountd
+firewall-cmd --permanent --add-service=rpc.bind
+firewall-cmd --reload
+
+
+firewall-cmd --list-services
+
+
+*****************************************************
+## check port active hai ya nahi
+netstat -tunlp  | grep 2049
+netstat -tunlp  | grep 111
+
+*****************************************************
+check which ip share how much folder ⇒
+showmount -e /192.168.0.1
+
+Rpcinfo -p =show port
+***************************************************************************************************************************************************************************************************************************************************
+
+
+                                          client machine:-------->
+
+
+
+
+
+check which ip share how much folder ⇒
+showmount -e /192.168.0.1
+
+
+
+mkdir  /yum
+
+mount  192.168.0.1:/sharedata     /yum
+
+
+
+mount permanently:-->
+vim /etc/fstab
+192.168.0.1:/sharedata        /yum       nfs       defaults      0    0 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Step 2: Create NFS Directory
+sudo mkdir /yum
+sudo chmod 755 /nfs/share
+
+Step 3: Configure Export
+sudo vi /etc/exports
+
+Add:
+/nfs/share  *(rw,sync,no_root_squash)
+
+Apply:
+sudo exportfs -rav
+
+Start service:
+sudo systemctl enable nfs-server --now
+
+
+
+Step 4: Access from Linux Client
+sudo mount SERVER_IP:/nfs/share /mnt
+
+🔐 Permissions & ACL Configuration
+Enable ACL:
+sudo setfacl -m u:sambauser:rwx /samba/share
+
+Verify:
+getfacl /samba/share
