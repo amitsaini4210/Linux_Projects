@@ -199,49 +199,27 @@ Vim  /etc/fstab
 2.Type:
 \\192.168.0.1\network
 
-3.Login using:
-Username: sambauser
-Password: ****
+
+Access samba server from window
+1.temporary    ⇒ from run
+2.permanent    ⇒ map drive         ( Permanent using map network bana kar⇒============ )
+
+
+
+
+in Window machine
+Make folder and then share  the folder with advance sharing option    (foldername=redhat)
+
+
+in linux machine
+smbclient  //192.168.0.50/redhat
+
+
+smbclient  //192.168.0.50/redhat   -U pankaj.KR
 
 
 ********************************************************************************************************************************************************************************************************************
-                                                    Part 2:  NFS Server Setup (Linux to Linux)
-
-
-Step 1: Install NFS
-sudo dnf install nfs-utils -y
-
-
-Step 2: Create NFS Directory
-sudo mkdir -p /nfs/share
-sudo chmod 755 /nfs/share
-
-Step 3: Configure Export
-sudo vi /etc/exports
-
-Add:
-/nfs/share  *(rw,sync,no_root_squash)
-
-Apply:
-sudo exportfs -rav
-
-Start service:
-sudo systemctl enable nfs-server --now
-
-Firewall:
-sudo firewall-cmd --add-service=nfs --permanent
-sudo firewall-cmd --reload
-
-Step 4: Access from Linux Client
-sudo mount SERVER_IP:/nfs/share /mnt
-
-🔐 Permissions & ACL Configuration
-Enable ACL:
-sudo setfacl -m u:sambauser:rwx /samba/share
-
-Verify:
-getfacl /samba/share
-
+                                                   
 
 
 
