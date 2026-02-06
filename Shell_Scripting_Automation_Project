@@ -1,0 +1,166 @@
+7️⃣ Shell Scripting Automation Project
+*********************************************************************************************************************************
+
+📌 Project Name
+Linux System Automation using Bash & Cron
+************************************************************************************
+🔧 Tools Used
+Bash Shell
+Cron Jobs
+Mail (mailx / sendmail)
+Linux utilities: tar, df, top, free, useradd, find
+
+************************************************************************************
+
+✅ 1. Daily Backup Script
+
+📂 Requirement
+Take backup of /home
+Store in /backup
+Keep date-wise backups
+
+
+
+vim daily_backup.sh
+#!/bin/bash
+
+SRC="/home"
+DEST="/backup"
+DATE=$(date +%F)
+
+mkdir -p $DEST
+tar -czf $DEST/home_backup_$DATE.tar.gz $SRC
+
+echo "Backup completed on $DATE" >> /var/log/backup.log
+
+
+
+⏰ Cron Job
+0 2 * * * /bin/bash /root/scripts/daily_backup.sh
+
+************************************************************************************
+
+
+✅ 2. Log Cleanup Script
+
+📂 Requirement
+Delete .log files older than 7 days
+Path: /var/log
+
+
+vim log_cleanup.sh
+
+#!/bin/bash
+
+LOG_PATH="/var/log"
+find $LOG_PATH -type f -name "*.log" -mtime +7 -exec rm -f {} \;
+
+echo "Old logs cleaned on $(date)" >> /var/log/log_cleanup.log
+
+⏰ Cron Job
+0 3 * * * /bin/bash /root/scripts/log_cleanup.sh
+
+************************************************************************************
+✅ 3. User Creation Script (Automation)
+📂 Requirement
+Create user with password
+Ask username from admin
+
+
+vm user_create.sh
+#!/bin/bash
+
+read -p "Enter username: " USER
+read -s -p "Enter password: " PASS
+echo
+
+useradd $USER
+echo "$USER:$PASS" | chpasswd
+
+echo "User $USER created successfully"
+***************
+▶ Run
+bash user_create.sh
+
+************************************************************************************
+
+
+✅ 4. Disk Usage Alert Script (with Mail)
+
+📂 Requirement
+Alert if disk usage > 80%
+Send mail to admin
+
+vim disk_alert.sh
+
+#!/bin/bash
+
+THRESHOLD=80
+EMAIL="admin@example.com"
+
+USAGE=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
+
+if [ $USAGE -gt $THRESHOLD ]; then
+    echo "Disk usage is $USAGE%" | mail -s "Disk Alert on Server" $EMAIL
+fi
+
+
+⏰ Cron Job
+*/30 * * * * /bin/bash /root/scripts/disk_alert.sh
+
+************************************************************************************
+✅ 5. CPU & Memory Monitoring Script
+
+📂 Requirement
+Check CPU & RAM
+Send alert if high usage
+
+
+vim cpu_mem_monitor.sh
+
+#!/bin/bash
+
+CPU=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
+MEM=$(free | awk '/Mem/ {printf("%.0f"), $3/$2 * 100}')
+EMAIL="admin@example.com"
+
+if [ $CPU -gt 80 ] || [ $MEM -gt 80 ]; then
+    echo "High Usage Alert
+CPU: $CPU%
+Memory: $MEM%" | mail -s "CPU/Memory Alert" $EMAIL
+fi
+
+
+
+⏰ Cron Job
+*/10 * * * * /bin/bash /root/scripts/cpu_mem_monitor.sh
+************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
