@@ -25,65 +25,179 @@ Implements permissions & ACLs
 Samba File Server Setup
 
 Step 1: Install Samba
-sudo dnf install samba samba-client samba-common -y
-
-Step 2: Create Shared Directory
-sudo mkdir -p /samba/share
-sudo chmod 2775 /samba/share
-sudo chown root:smbgroup /samba/share
-
-Create group & user:
-sudo groupadd smbgroup
-sudo useradd sambauser
-sudo usermod -aG smbgroup sambauser
-sudo passwd sambauser
-
-
-Add Samba password:
-sudo smbpasswd -a sambauser
-
-
-Step 3: Configure Samba Share
-
-sudo vi /etc/samba/smb.conf
-
-
-Add at bottom:
-[SharedData]
-   path = /samba/share
-   valid users = @smbgroup
-   writable = yes
-   browseable = yes
-   create mask = 0664
-   directory mask = 2775
+yum install samba samba-client samba-common -y
 
 
 Step 4: Start & Enable Samba
-sudo systemctl enable smb --now
-sudo systemctl status smb
+systemctl start smb 
+systemctl enable smb 
+
+systemctl status smb
+
 
 Firewall:
 
-sudo firewall-cmd --add-service=samba --permanent
-sudo firewall-cmd --reload
+firewall-cmd --permanent --add-service=samba 
+firewall-cmd --reload
 
+
+
+Step 2: Create Shared Directory
+mkdir -p /Publicdata
+mkdir -p /Privatedata
+
+touch /publicdata/abc{1..5}
+touch /Privatedata/xyz{1..5}
+
+echo "hello samba public files" > /publicdata/abc1
+echo "hello samba Private files" > /Privatedata/xyz1
+
+Chmod  777  /publicdata
+
+
+Create user:
+useradd sachin
+useradd deepak
+
+
+Add Samba password:
+smbpasswd -a sachin
+
+
+Step 3: Configure Samba Share
+vim /etc/samba/smb.conf
+
+
+Add at bottom:
+[network]
+   comment = this is my samba public access file.
+   path = /publicdata
+   public = yes
+   writable = no
+   browseable = yes
+   printable = no
+[cloud]
+   comment = this is my samba private access file.
+   path = /Privatedata          
+   public = no
+   writable = yes
+   browseable = yes
+   printable = no
+   valid users = sachin 
+
+
+
+********************************************************************************
+Systemctl restart smb
+
+Testparm  ⇒ if any mistake show me 
+
+********************************************************************************
+Selinux ki policy se match karna padega  directory ka Contex change karna padega
+check:
+ls -ldZ /publicdata
+
+chcon -R -t samba_share_t /publicdata
+chcon -R -t samba_share_t /privatedata
+
+
+********************************************************************************
+Systemctl restart smb
+
+netstat -tunlp | grep -E '445|139'
+
+
+********************************************************************************
 
 
 
 💻 Access Samba Share
+Yum install samba-client -y
 
+check: installed or not
+Which smbclient
+
+
+
+First check konse se folder accessible hai
+smbclient -L //192.168.0.1
+********************************************************************************
+connect with diectory name
+smbclient //192.168.0.1/network
+
+get abc1
+
+⇒ multiple file get karne ke liye ,but yes magta hai har bar
+Mget abc1 abc2  
+
+
+Prompt ⇒          stop asking yes or not
+
+********************************************************************************
+By default save file in home location
+If change location 
+
+Lcd  /tmp   ⇒ local change directory
+********************************************************************************
 ✅ From Linux Client
-smbclient //SERVER_IP/SharedData -U sambauser
+smbclient //192.168.0.1/cloud -U sachin
 
+give password:
+
+
+
+rpm -qa cifs-utils
+yum install cifs-utils -y
+
+mkdir /data1
+mkdir /data2
 
 Mount permanently:
-sudo mount -t cifs //SERVER_IP/SharedData /mnt  -o username=sambauser
+mount -t cifs //192.168.0.1/network /data1  -o guest
 
+ls /data1
+
+successfully mount--->
+
+
+==user access folder mount
+
+Mount permanently:
+mount -t cifs //192.168.0.1/cloud /data2  -o username=sachin
+
+password=*****
+
+********************************************************************************
+
+Permanent mount folder in machine
+Vim  /etc/fstab 
+
+//192.168.0.1/network       /data1       cifs      defaults,guest   0 0
+//192.168.0.1/cloud        /data2        cifs      defaults,username=sachin,password=123  0 0
+
+********************************************************************************
+refresh file  after change
+Mount -a
+********************************************************************************
+If  you dont want to show password anyone like above
+Make Local file which only see you  
+
+
+vim /root/username.txt
+username=sachin
+password=123
+
+chmod 600   /root/username.txt
+
+Vim  /etc/fstab 
+//192.168.0.1/cloud        /data2        cifs      defaults,credentials=/root/username.txt  0 0
+
+********************************************************************************
 
 ✅ From Windows Client
 1.Press Win + R
 2.Type:
-\\SERVER_IP\SharedData
+\\192.168.0.1\network
 
 3.Login using:
 Username: sambauser
