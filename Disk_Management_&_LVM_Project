@@ -1,0 +1,72 @@
+🎯 Project Objective
+Configure storage using partitions + LVM, resize disks safely, mount permanently, and enforce disk quotas.
+
+
+
+Check disk:
+lsblk
+
+
+🔹 Step 1: Create Disk Partition
+fdisk /dev/sdb
+
+
+
+🔹 Step 2: Create LVM Structure
+1️⃣ Create Physical Volume (PV)
+pvcreate /dev/sdb1
+pvdisplay
+
+
+2️⃣ Create Volume Group (VG)
+vgcreate vg_data /dev/sdb1
+vgdisplay
+
+3️⃣ Create Logical Volume (LV)
+lvcreate -L 5G -n lv_app vg_data
+lvdisplay
+
+🔹 Step 3: Create Filesystem
+mkfs.ext4 /dev/vg_data/lv_app
+
+🔹 Step 4: Mount Logical Volume
+mkdir /data
+
+
+Mount:
+mount  /dev/vg_data/lv_app  /data
+
+Verify:
+df -h
+
+
+
+🔹 Step 5: Permanent Mount (fstab)
+vim /etc/fstab
+
+/dev/vg_data/lv_app   /data   ext4   defaults   0 0
+
+Test:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
