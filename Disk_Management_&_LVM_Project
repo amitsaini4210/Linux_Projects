@@ -42,11 +42,58 @@ df -h
 
 
 🔹 Step 5: Permanent Mount (fstab)
-vim /etc/fstab
 
+vim /etc/fstab
 /dev/vg_data/lv_app   /data   ext4   defaults   0 0
 
 Test:
+mount -a
+
+🔹 Step 6: Resize Logical Volume (Important Skill)
+
+
+➕ Extend LV (Live, no data loss)
+lvextend -L +2G /dev/vg_data/lv_app
+
+
+Resize filesystem:
+resize2fs /dev/vg_data/lv_app
+
+Verify:
+df -h
+
+🔹 Step 7: Setup Disk Quotas
+Install quota package
+dnf install quota -y
+
+vim /etc/fstab
+/dev/vg_data/lv_app /data ext4 defaults,usrquota,grpquota 0 0
+
+Remount:
+mount -o remount /data
+
+Create quota files
+quotacheck -cug /data
+quotaon /data
+
+Step 8: Apply User Quota
+Create test user:
+useradd testuser
+passwd testuser
+
+Set quota:
+edquota -u testuser
+
+Example:
+Soft limit: 500MB
+Hard limit: 700MB
+
+Check quota:
+quota -u testuser
+
+
+
+
 
 
 
