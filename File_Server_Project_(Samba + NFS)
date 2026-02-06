@@ -1,0 +1,149 @@
+🎯 Project Objective
+Set up a centralized file server that:
+Shares files with Linux & Windows
+Uses Samba (SMB) for cross-platform access
+Uses NFS for high-performance Linux sharing
+Implements permissions & ACLs
+
+********************************************************************************************************
+🧱 Architecture
+          Windows Client
+                |
+                |  (SMB / CIFS)
+                |
+        ┌───────────────────┐
+        │   Samba Server     │
+        │   + NFS Server     │
+        └───────────────────┘
+                |
+                |  (NFS)
+                |
+           Linux Client
+********************************************************************************************************
+
+
+Samba File Server Setup
+
+Step 1: Install Samba
+sudo dnf install samba samba-client samba-common -y
+
+Step 2: Create Shared Directory
+sudo mkdir -p /samba/share
+sudo chmod 2775 /samba/share
+sudo chown root:smbgroup /samba/share
+
+Create group & user:
+sudo groupadd smbgroup
+sudo useradd sambauser
+sudo usermod -aG smbgroup sambauser
+sudo passwd sambauser
+
+
+Add Samba password:
+sudo smbpasswd -a sambauser
+
+
+Step 3: Configure Samba Share
+
+sudo vi /etc/samba/smb.conf
+
+
+Add at bottom:
+[SharedData]
+   path = /samba/share
+   valid users = @smbgroup
+   writable = yes
+   browseable = yes
+   create mask = 0664
+   directory mask = 2775
+
+
+Step 4: Start & Enable Samba
+sudo systemctl enable smb --now
+sudo systemctl status smb
+
+Firewall:
+
+sudo firewall-cmd --add-service=samba --permanent
+sudo firewall-cmd --reload
+
+
+
+
+💻 Access Samba Share
+
+✅ From Linux Client
+smbclient //SERVER_IP/SharedData -U sambauser
+
+
+Mount permanently:
+sudo mount -t cifs //SERVER_IP/SharedData /mnt  -o username=sambauser
+
+
+✅ From Windows Client
+1.Press Win + R
+2.Type:
+\\SERVER_IP\SharedData
+
+3.Login using:
+Username: sambauser
+Password: ****
+
+
+********************************************************************************************************************************************************************************************************************
+                                                    Part 2:  NFS Server Setup (Linux to Linux)
+
+
+Step 1: Install NFS
+sudo dnf install nfs-utils -y
+
+
+Step 2: Create NFS Directory
+sudo mkdir -p /nfs/share
+sudo chmod 755 /nfs/share
+
+Step 3: Configure Export
+sudo vi /etc/exports
+
+Add:
+/nfs/share  *(rw,sync,no_root_squash)
+
+Apply:
+sudo exportfs -rav
+
+Start service:
+sudo systemctl enable nfs-server --now
+
+Firewall:
+sudo firewall-cmd --add-service=nfs --permanent
+sudo firewall-cmd --reload
+
+Step 4: Access from Linux Client
+sudo mount SERVER_IP:/nfs/share /mnt
+
+🔐 Permissions & ACL Configuration
+Enable ACL:
+sudo setfacl -m u:sambauser:rwx /samba/share
+
+Verify:
+getfacl /samba/share
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
