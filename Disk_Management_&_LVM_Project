@@ -1,66 +1,186 @@
+ Disk Management & LVM Project
+1PE ==4MB
+Pe hi aage jake LE banata hai
+pe=125*4=500mb   
+LE=500/4=125 pe
+
+
+************************************************************************************************************************
 🎯 Project Objective
 Configure storage using partitions + LVM, resize disks safely, mount permanently, and enforce disk quotas.
 
-
+************************************************************************************************************************
+⇒ check LVM hai ya nahi
+Rpm -qa lvm   
 
 Check disk:
 lsblk
-
+************************************************************************************************************************
 
 🔹 Step 1: Create Disk Partition
 fdisk /dev/sdb
 
 
-
+************************************************************************************************************************
 🔹 Step 2: Create LVM Structure
 1️⃣ Create Physical Volume (PV)
 pvcreate /dev/sdb1
 pvdisplay
-
-
+pvs
+****************************************************
 2️⃣ Create Volume Group (VG)
-vgcreate vg_data /dev/sdb1
+vgcreate  myvg1  /dev/sdb1
 vgdisplay
+vgs
 
+
+Vg auto take 4M PE size but when mention take it. 
+vgcreate -s 8M fedora /dev/sdb5
+
+****************************************************
 3️⃣ Create Logical Volume (LV)
-lvcreate -L 5G -n lv_app vg_data
+lvcreate -L +5G -n mylv1  /dev/myvg1
 lvdisplay
+************************************************************************************************************************
 
 🔹 Step 3: Create Filesystem
-mkfs.ext4 /dev/vg_data/lv_app
-
+mkfs.xfs /dev/myvg1/mylv1
+mkfs.ext4 /dev/myvg1/mylv2
+************************************************************************************************************************
 🔹 Step 4: Mount Logical Volume
-mkdir /data
+mkdir  /lvm1
+mkdir  /lvm2
 
 
 Mount:
-mount  /dev/vg_data/lv_app  /data
+mount  /dev/myvg1/mylv1  /lvm1
+mount  /dev/myvg1/mylv2  /lvm2
+
+
+check lvm:
+lvs
+
 
 Verify:
 df -h
 
 
-
+************************************************************************************************************************
 🔹 Step 5: Permanent Mount (fstab)
 
 vim /etc/fstab
-/dev/vg_data/lv_app   /data   ext4   defaults   0 0
+/dev/myvg1/mylv1   /lvm1   xfs    defaults   0 0
+/dev/myvg2/mylv2   /lvm2   ext4   defaults   0 0
 
 Test:
 mount -a
+******************************************************************************************************************************************************************************************************************************
+
+Task-1
+if Filesystem Type is in ext2, ext3 and ext-4
+
+First method: using Two commands  ==> lvextend and resize2fs
+Second method: using single commands ==> using lvresize
+
+
+
+Task-2
+if Filesystem Type is in xfs  
+First method:    lvextend + xfs_growfs { support till rhel-7 }
+Second method:  lvresize {recommended command in rhel-8}
+
+
+
+
 
 🔹 Step 6: Resize Logical Volume (Important Skill)
 
+check available size:
+vgs
 
 ➕ Extend LV (Live, no data loss)
-lvextend -L +2G /dev/vg_data/lv_app
+lvextend -L +2G /dev/myvg1/mylv2
 
+lvresize -L 3GB  -r /dev/myvg1/mylv2
 
-Resize filesystem:
-resize2fs /dev/vg_data/lv_app
 
 Verify:
 df -h
+************************************************************************************************************************
+LVM Reduce
+
+LVM Reduce
+==>
+1- support only in offline mode
+2- LVM reduce operation does not support in xfs based filesystem. but it is possible in ext2 ext3 and ext-4.
+
+
+lvresize -L 1GB  -r /dev/myvg1/mylv2
+************************************************************************************************************************
+
+VG EXTEND
+
+fdisk /dev/sdb
+partprobe /dev/sdb
+udevadm settle
+
+vgextend  myvg1  /dev/sdb3
+pvs
+************************************************************************************************************************
+-an = activate no
+-ay = activate yes
+
+Activate and deactivate LVM
+
+
+lvchange -an  /dev/myvg1/mylv2
+lvs
+
+lvchange -ay  /dev/myvg1/mylv2
+
+************************************************************************************************************************
+
+LVM corrupt with wrong command recover it 
+it make index number before command execution this index number help for recovering
+store in this location:--->
+/etc/lvm/archive
+
+
+check link:
+vgcfgrestore  -l fedora
+
+restore:
+vgcfgrestore -f /etc/lvm/archive/fedora_00002-1964966695.vg fedora 
+************************************************************************************************************************
+
+HOW WE CAN MERGE VOLUME GROUPS.
+
+
+vgmerge   /dev/myvg1    /dev/myvg2                -----(merge vg2 in vg1)
+
+systemctl daemon reload
+df -Th
+
+mount  /dev/myvg1/mylv3   /lvm4
+************************************************************************************************************************
+lvremove
+
+
+lvremove  /dev/myvg1/mylv3
+lvremove  /dev/myvg1/mylv2
+lvremove  /dev/myvg1/mylv1
+
+
+vgremove /dev/myvg1
+
+pvremove  /dev/sdb{1,2,3} 
+
+
+
+
+
+************************************************************************************************************************
+
 
 🔹 Step 7: Setup Disk Quotas
 Install quota package
@@ -93,7 +213,7 @@ quota -u testuser
 
 
 
-
+************************************************************************************************************************
 
 
 
