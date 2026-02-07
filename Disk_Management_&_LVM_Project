@@ -1,28 +1,36 @@
- Disk Management & LVM Project
+                                                                     Disk Management & LVM Project
+                                                                        🎯 Project Objective
+                                     Configure storage using partitions + LVM, resize disks safely, mount permanently.
+************************************************************************************************************************************************************************************************************************************************
+
 1PE ==4MB
-Pe hi aage jake LE banata hai
-pe=125*4=500mb   
-LE=500/4=125 pe
-
-
-************************************************************************************************************************
-🎯 Project Objective
-Configure storage using partitions + LVM, resize disks safely, mount permanently, and enforce disk quotas.
+PE hi aage jake LE banata hai
+--------------------------
+PE = 125*4 = 500MB   
+LE = 500/4 = 125 PE
 
 ************************************************************************************************************************
-⇒ check LVM hai ya nahi
-Rpm -qa lvm   
-
 Check disk:
 lsblk
 ************************************************************************************************************************
 
 🔹 Step 1: Create Disk Partition
+
 fdisk /dev/sdb
 
+Inside fdisk:
+n   → new partition
+p   → primary
+1   → partition number
+Enter → default start
+Enter → +5G   (for 5GB partition) end
+t   → change type
+8e  → Linux LVM
+w   → write
 
 ************************************************************************************************************************
 🔹 Step 2: Create LVM Structure
+
 1️⃣ Create Physical Volume (PV)
 pvcreate /dev/sdb1
 pvdisplay
@@ -34,16 +42,17 @@ vgdisplay
 vgs
 
 
-Vg auto take 4M PE size but when mention take it. 
+Vg auto take 4M PE size but when mention take it. 8M PE
 vgcreate -s 8M fedora /dev/sdb5
 
 ****************************************************
 3️⃣ Create Logical Volume (LV)
-lvcreate -L +5G -n mylv1  /dev/myvg1
+lvcreate  -L  +5G  -n  mylv1  /dev/myvg1
 lvdisplay
 ************************************************************************************************************************
 
 🔹 Step 3: Create Filesystem
+
 mkfs.xfs /dev/myvg1/mylv1
 mkfs.ext4 /dev/myvg1/mylv2
 ************************************************************************************************************************
@@ -75,6 +84,7 @@ vim /etc/fstab
 Test:
 mount -a
 ******************************************************************************************************************************************************************************************************************************
+                    ---------------------------------EXTEND Volume size
 
 Task-1
 if Filesystem Type is in ext2, ext3 and ext-4
@@ -89,17 +99,15 @@ if Filesystem Type is in xfs
 First method:    lvextend + xfs_growfs { support till rhel-7 }
 Second method:  lvresize {recommended command in rhel-8}
 
-
-
-
-
-🔹 Step 6: Resize Logical Volume (Important Skill)
+**********************************************************************************
+🔹 Step 6: Resize Logical Volume
 
 check available size:
 vgs
 
 ➕ Extend LV (Live, no data loss)
-lvextend -L +2G /dev/myvg1/mylv2
+
+lvextend  -L  +2G   /dev/myvg1/mylv2
 
 lvresize -L 3GB  -r /dev/myvg1/mylv2
 
@@ -107,7 +115,7 @@ lvresize -L 3GB  -r /dev/myvg1/mylv2
 Verify:
 df -h
 ************************************************************************************************************************
-LVM Reduce
+                                                        LVM Reduce
 
 LVM Reduce
 ==>
@@ -115,10 +123,10 @@ LVM Reduce
 2- LVM reduce operation does not support in xfs based filesystem. but it is possible in ext2 ext3 and ext-4.
 
 
-lvresize -L 1GB  -r /dev/myvg1/mylv2
+lvresize   -L   1GB  -r   /dev/myvg1/mylv2
 ************************************************************************************************************************
 
-VG EXTEND
+                                                      VG EXTEND
 
 fdisk /dev/sdb
 partprobe /dev/sdb
@@ -127,10 +135,9 @@ udevadm settle
 vgextend  myvg1  /dev/sdb3
 pvs
 ************************************************************************************************************************
+                                                  Activate and deactivate LVM
 -an = activate no
 -ay = activate yes
-
-Activate and deactivate LVM
 
 
 lvchange -an  /dev/myvg1/mylv2
@@ -139,9 +146,12 @@ lvs
 lvchange -ay  /dev/myvg1/mylv2
 
 ************************************************************************************************************************
+ 
+                                             LVM corrupt with wrong command recover it 
+                                    it make index number before command execution this index number help for recovering
 
-LVM corrupt with wrong command recover it 
-it make index number before command execution this index number help for recovering
+
+
 store in this location:--->
 /etc/lvm/archive
 
@@ -153,7 +163,9 @@ restore:
 vgcfgrestore -f /etc/lvm/archive/fedora_00002-1964966695.vg fedora 
 ************************************************************************************************************************
 
-HOW WE CAN MERGE VOLUME GROUPS.
+                                              HOW WE CAN MERGE VOLUME GROUPS.
+
+
 
 
 vgmerge   /dev/myvg1    /dev/myvg2                -----(merge vg2 in vg1)
@@ -163,7 +175,7 @@ df -Th
 
 mount  /dev/myvg1/mylv3   /lvm4
 ************************************************************************************************************************
-lvremove
+                                                     Lvremove
 
 
 lvremove  /dev/myvg1/mylv3
@@ -175,50 +187,61 @@ vgremove /dev/myvg1
 
 pvremove  /dev/sdb{1,2,3} 
 
-
-
-
-
 ************************************************************************************************************************
 
-
-🔹 Step 7: Setup Disk Quotas
-Install quota package
-dnf install quota -y
-
-vim /etc/fstab
-/dev/vg_data/lv_app /data ext4 defaults,usrquota,grpquota 0 0
-
-Remount:
-mount -o remount /data
-
-Create quota files
-quotacheck -cug /data
-quotaon /data
-
-Step 8: Apply User Quota
-Create test user:
-useradd testuser
-passwd testuser
-
-Set quota:
-edquota -u testuser
-
-Example:
-Soft limit: 500MB
-Hard limit: 700MB
-
-Check quota:
-quota -u testuser
+                                                      Disk partition using parted command
+                                        parted is used for both MBR and GPT disks, especially GPT disks ( >2TB ).
 
 
+🔹 Step 1: Check Disk & Partition Table
+lsblk
+parted -l
+*********************************************************************
+🔹 Step 2: Open Disk in parted
+Parted    /dev/sdc  mklabel msdos
 
-************************************************************************************************************************
+*********************************************************************
+🔹Step 3: Create Partition Table
+
+👉 For MBR (msdos)
+mklabel msdos
+
+👉 For GPT 
+mklabel gpt
+
+*********************************************************************
+🔹 Step 4: Create Partition
+
+mkpart
+primary/extended
+ext4
+start 2048s
+end   1024MB
+*********************************************************************
+
+🔹 Step 5: Verify Partition
+print
+*********************************************************************
+
+🔹 Step 6: Exit parted
+quit
+*********************************************************************
+🔹 Step 7: Reload Partition Table
+
+partprobe /dev/sdb
+udevadm settle
+*********************************************************************
+ 
+🔹 Step 8: After Partition Creation
+
+👉 For filesystem
+mkfs.ext4 /dev/sdb1
 
 
+👉 For LVM
+pvcreate /dev/sdb1
 
-
-
+*********************************************************************
 
 
 
