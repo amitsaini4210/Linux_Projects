@@ -33,7 +33,8 @@ inet_protocols = ipv4
 mydestination = $myhostname,localhost.$mydomain,localhost,$mydomain
 relayhost = [smtp.gmail.com]:587
 
-mynetworks= ....
+mynetworks= 192.168.0.0/24 , 127.0.0.0/8
+home_mailbox = Maildir/
 ******************************************************************************************
 
 systemctl restart Postfix
