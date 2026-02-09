@@ -117,6 +117,109 @@ firewall-cmd --reload
 in webbrowser:--
 <serverip>/nagios
 
+******************************************************************************************************************************************************************************************************************************************
+
+nagios client setup
+
+vim /etc/hosts
+
+
+🔹 Permanent (Survives Reboot) ✅
+
+sudo vi /etc/selinux/config
+Change:
+SELINUX=enforcing    --> SELINUX=permissive
+
+
+dnf update -y
+
+dnf install -y gcc glibc glibc-common openssl openssl-devel perl wget
+
+not important do any location 
+cd /usr/src
+
+wget https://github.com/NagiosEnterprises/nrpe/releases/download/nrpe-4.1.0/nrpe-4.1.0.tar.gz
+tar -xvf nrpe-4.1.0.tar.gz
+
+cd nrpe
+./configure
+
+
+compilation:--
+make all
+
+
+make install-groups-users
+groupadd -r nagios
+useradd -r -g nagios nagios
+
+
+make install
+
+
+make install-config
+
+
+
+update services file:--
+sh -c "echo >> /etc/services"
+
+sh -c "sudo echo '# nagios services' >> /etc/services"
+
+
+define port:--
+sh -c "sudo echo 'nrpe 5666/tcp' >> /etc/services"
+
+
+
+make install-init
+
+
+systemctl enable nrpe
+
+
+vim /usr/local/nagios/etc/nrpe.conf
+
+allowed_hosts=127.0.0.1  ,192.168.0.6
+dont_blame-nrpe=1
+
+
+uncomment lines:--    MISC system metrics    --all line
+uncomment lines:--    Generic services    --all line
+uncomment lines:--    system updates    --all line
+uncomment lines:--    processes   --all line
+uncomment lines:--    open files    --all line
+uncomment lines:--    network connections    --all line
+
+
+
+firewall-cmd --permanent --add-port=5666/tcp
+firewall-cmd --reload
+
+
+systemctl start nrpe
+
+*******************************************************************************************************************
+back to server
+
+
+mkdir /usr/local/nagios/etc/servers
+
+
+chown -R nagios:nagios  /usr/local/nagios/etc/servers
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
