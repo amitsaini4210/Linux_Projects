@@ -3,16 +3,21 @@ Mail Server with Postfix
 🧱 Architecture (Production Style)
 Linux Server
  ├── Postfix (SMTP)
- │    ├── Gmail Relay (Outbound)
- │    ├── Mail Aliases
- │    ├── TLS/SSL
- │
- ├── Dovecot (IMAP/POP3) [Bonus]
- ├── SpamAssassin (Basic Spam Protection)
- └── Firewalld
+ │    ├── Gmail Relay 
+ ├── Dovecot (IMAP/POP3) 
+ 
 ******************************************************************************************
+dnf update -y
+systemctl disable --now sendmail
+dnf remove sendmail -y
+
+******************************************************************************************
+vim /etc/hosts
+192.168.0.6  stataion6.example.com  station6
+
+
 1️⃣ Install Required Packages
-sudo dnf install -y postfix mailx cyrus-sasl cyrus-sasl-plain
+sudo dnf install -y postfix mailx 
 
 Enable Postfix:
 sudo systemctl enable --now postfix
@@ -23,17 +28,17 @@ systemctl status postfix
 2️⃣ Configure Postfix (Main Config)
 sudo vim /etc/postfix/main.cf
 
-myhostname = mail.example.com             --(station1.example.com)
+myhostname = station6.example.com             --(station1.example.com)
 mydomain = example.com
 myorigin = $mydomain
 
 inet_interfaces = all
-inet_protocols = ipv4
+inet_protocols = all
 
 mydestination = $myhostname,localhost.$mydomain,localhost,$mydomain
 relayhost = [smtp.gmail.com]:587
 
-mynetworks= 192.168.0.0/24 , 127.0.0.0/8
+mynetworks= 192.168.0.6/24 , 127.0.0.0/8
 home_mailbox = Maildir/
 ******************************************************************************************
 
@@ -112,6 +117,9 @@ Ls -lrt
 
 ******************************************************************************************
 
+
+
+
 In machine-2
 Make local mailing system
 
@@ -174,11 +182,14 @@ sudo postmap /etc/postfix/sasl_passwd
 
 Step 3: Enable SMTP Auth in Postfix
 Add to main.cf:
-smtp_sasl_auth_enable = yes
-smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
-smtp_sasl_security_options = noanonymous
+smtp_tls_security_level = may
+meta_directory = /etc/postfix
+shlib_directory = /usr/lib64/postfix
+relayhost = [smtp.gmail.com]:587 
 smtp_use_tls = yes
-smtp_tls_security_level = encrypt
+smtp_sasl_auth_enable = yes
+smtp_sasl_security_options = 
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
 smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt
 
 
@@ -193,62 +204,7 @@ Check logs:
 tail -f /var/log/maillog
 
 ******************************************************************************************
-5️⃣ Mail Aliases (Production Use)
-sudo vim /etc/aliases
 
-Example:
-root: admin@example.com
-support: amit
-
-Apply:
-sudo newaliases
-
-Test:
-echo "Alias test" | mail support
-******************************************************************************************
-6️⃣ Enable SSL/TLS (Mandatory in Production)
-
-Generate certificate (Self-signed for lab):
-
-sudo openssl req -new -x509 -days 365 -nodes \
--out /etc/pki/tls/certs/postfix.pem \
--keyout /etc/pki/tls/private/postfix.key
-
-Add to main.cf:
-
-smtpd_tls_cert_file=/etc/pki/tls/certs/postfix.pem
-smtpd_tls_key_file=/etc/pki/tls/private/postfix.key
-smtpd_tls_security_level=may
-
-Restart:
-systemctl restart postfix
-******************************************************************************************
-7️⃣ Send & Receive Emails (Local Users)
-Create user:
-sudo useradd amit
-sudo passwd amit
-
-Send mail:
-mail amit
-
-Read mail:
-su - amit
-mail
-******************************************************************************************
-9️⃣ Basic Spam Protection (SpamAssassin)
-Install:
-sudo dnf install -y spamassassin
-
-Enable:
-sudo systemctl enable --now spamassassin
-
-Basic check:
-spamassassin --lint
-
-******************************************************************************************
-
-
-******************************************************************************************
 
 
 
