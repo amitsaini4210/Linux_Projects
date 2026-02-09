@@ -4,9 +4,7 @@ nagiOS server configuration
 
 🔹 Permanent (Survives Reboot) ✅
 
-sudo vi /etc/selinux/config
-Change:
-SELINUX=enforcing    --> SELINUX=permissive
+Sed -i 's/SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config && setenforce 0
 *******************************************************************************************************************
 
 dnf update -y
@@ -15,11 +13,13 @@ dnf update -y
 
 dnf install @php @perl @httpd wget unzip glibc automake glibc-common
 gettext autoconf php php-cli gcc gd gd-devel net-snmp openssl-devel 
-unzip net-snmp postfix net-snmp-utils -yı
+unzip net-snmp postfix net-snmp-utils -y
 
 
+sestatus
 
-dnf groupinstall "development tools" -y   (for compilation)
+
+dnf groupinstall "Development Tools" -y   (for compilation)
 
 
 systemctl enable --now httpd php-fpm
@@ -30,6 +30,10 @@ if install any speciific version
 export VER="4.4.6"
 
 Download & Install Nagios Core:--
+link1:--
+curl -SL https://github.com/NagiosEnterprises/nagioscore /releases/download/nagios- $VER/nagios - $VER.tar.gz | tar -xzf -
+
+Link2:--
 wget https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.14.tar.gz
 tar -xvf nagios-4.4.14.tar.gz
 cd nagios-4.4.14
@@ -88,7 +92,11 @@ VER="2.3.3"
 
 
 2️⃣ Install Nagios Plugins
+link1:--
+VER="2.3.3"
+curl -SL https://github.com/nagios-plugins/nagios-plugins/releases/download/release-$VER/nagios-plugins-$VER.tar.gz | tar -xzf
 
+Link2:---
 wget https://nagios-plugins.org/download/nagios-plugins-2.4.6.tar.gz
 tar -xvf nagios-plugins-2.4.6.tar.gz
 
@@ -126,17 +134,24 @@ vim /etc/hosts
 
 🔹 Permanent (Survives Reboot) ✅
 
+method=1:--
 sudo vi /etc/selinux/config
 Change:
 SELINUX=enforcing    --> SELINUX=permissive
 
+method=2:--
+Sed -i 's/SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config && setenforce 0
+
 
 dnf update -y
 
+
 dnf install -y gcc glibc glibc-common openssl openssl-devel perl wget
+
 
 not important do any location 
 cd /usr/src
+
 
 wget https://github.com/NagiosEnterprises/nrpe/releases/download/nrpe-4.1.0/nrpe-4.1.0.tar.gz
 tar -xvf nrpe-4.1.0.tar.gz
