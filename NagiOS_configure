@@ -1,0 +1,138 @@
+nagiOS server configuration
+
+
+
+🔹 Permanent (Survives Reboot) ✅
+
+sudo vi /etc/selinux/config
+Change:
+SELINUX=enforcing    --> SELINUX=permissive
+
+
+dnf update -y
+
+1️⃣ Install Nagios Server (RHEL)
+
+dnf install @php @perl @httpd wget unzip glibc automake glibc-common
+gettext autoconf php php-cli gcc gd gd-devel net-snmp openssl-devel 
+unzip net-snmp postfix net-snmp-utils -yı
+
+
+
+dnf groupinstall "development tools" -y   (for compilation)
+
+
+systemctl enable --now httpd php-fpm
+
+systemctl status httpd php-fpm
+
+if install any speciific version
+export VER="4.4.6"
+
+Download & Install Nagios Core:--
+wget https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.14.tar.gz
+tar -xvf nagios-4.4.14.tar.gz
+cd nagios-4.4.14
+./configure --with-command-group=nagcmd
+
+make all
+
+
+make install-groups-users
+groupadd -r nagios
+useradd -g nagios nagios
+usermod -aG nagios apache
+
+
+install nagios base:
+make install
+
+
+set services for boot time:--
+make install-daemoninit
+
+
+set permission on groups:--
+make install-commandmode
+
+
+for configuration:--
+make install-config
+
+for access in web browser:--
+make install-webconf
+
+
+use for nagios web interface:---
+make install-exfoliation
+
+
+make install-classicui
+
+
+
+set password for nagios admin:--
+htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+
+
+
+systemctl restart httpd 
+
+
+
+change location cd ~
+
+
+if install any specific version
+VER="2.3.3"
+
+
+2️⃣ Install Nagios Plugins
+
+wget https://nagios-plugins.org/download/nagios-plugins-2.4.6.tar.gz
+tar -xvf nagios-plugins-2.4.6.tar.gz
+
+cd nagios-plugins-2.4.6
+./configure
+
+make
+make install
+
+
+
+verify installtion:--
+/usr/local/nagios/bin/nagios  -v /usr/local/nagios/etc/nagios.cfg
+
+
+systemctl enable --now nagios
+
+systemctl status nagios
+
+
+
+firewall-cmd --permanent --add-services={http,https}
+firewall-cmd --reload
+
+
+in webbrowser:--
+<serverip>/nagios
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
