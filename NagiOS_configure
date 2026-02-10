@@ -41,24 +41,11 @@ cd nagioscore
 
 4️⃣ Compile & Install Nagios
 ./configure --with-command-group=nagcmd
-make all
-sudo make install
-sudo make install-init
-sudo make install-commandmode
-sudo make install-config
-sudo make install-webconf
-
-
-
-
-
 
 make all
 
 
-make install-groups-users
-groupadd -r nagios
-useradd -g nagios nagios
+make install-groups-users (groupadd -r nagios     useradd -g nagios nagios )
 usermod -aG nagios apache
 
 
