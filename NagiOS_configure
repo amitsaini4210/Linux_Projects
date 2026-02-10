@@ -26,18 +26,32 @@ systemctl enable --now httpd php-fpm
 
 systemctl status httpd php-fpm
 
+******************************************************************************************************************************
 if install any speciific version
 export VER="4.4.6"
-
 Download & Install Nagios Core:--
-link1:--
+link=1:--
 curl -SL https://github.com/NagiosEnterprises/nagioscore /releases/download/nagios- $VER/nagios - $VER.tar.gz | tar -xzf -
 
-Link2:--
-wget https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.14.tar.gz
-tar -xvf nagios-4.4.14.tar.gz
-cd nagios-4.4.14
+
+Link=2:--
+cd /tmp
+git clone https://github.com/NagiosEnterprises/nagioscore.git
+cd nagioscore
+
+4️⃣ Compile & Install Nagios
 ./configure --with-command-group=nagcmd
+make all
+sudo make install
+sudo make install-init
+sudo make install-commandmode
+sudo make install-config
+sudo make install-webconf
+
+
+
+
+
 
 make all
 
@@ -48,6 +62,8 @@ useradd -g nagios nagios
 usermod -aG nagios apache
 
 
+
+4️⃣ Compile & Install Nagios
 install nagios base:
 make install
 
@@ -92,20 +108,21 @@ VER="2.3.3"
 
 
 2️⃣ Install Nagios Plugins
-link1:--
+link=1:--
 VER="2.3.3"
 curl -SL https://github.com/nagios-plugins/nagios-plugins/releases/download/release-$VER/nagios-plugins-$VER.tar.gz | tar -xzf
 
-Link2:---
+Link=2:---
+cd /tmp
 wget https://nagios-plugins.org/download/nagios-plugins-2.4.6.tar.gz
-tar -xvf nagios-plugins-2.4.6.tar.gz
+tar -xzf nagios-plugins-*.tar.gz
+cd nagios-plugins-*
+./configure --with-nagios-user=nagios --with-nagios-group=nagios
 
-cd nagios-plugins-2.4.6
-./configure
+
 
 make
 make install
-
 
 
 verify installtion:--
@@ -134,11 +151,6 @@ vim /etc/hosts
 
 🔹 Permanent (Survives Reboot) ✅
 
-method=1:--
-sudo vi /etc/selinux/config
-Change:
-SELINUX=enforcing    --> SELINUX=permissive
-
 method=2:--
 Sed -i 's/SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config && setenforce 0
 
@@ -152,6 +164,9 @@ dnf install -y gcc glibc glibc-common openssl openssl-devel perl wget
 not important do any location 
 cd /usr/src
 
+
+✅ How to download and install EPEL-Release for RHEL 7
+sudo yum install https://archives.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm
 
 wget https://github.com/NagiosEnterprises/nrpe/releases/download/nrpe-4.1.0/nrpe-4.1.0.tar.gz
 tar -xvf nrpe-4.1.0.tar.gz
@@ -235,10 +250,8 @@ kiya monitor karna hai set here:---
 vim /usr/local/nagios/etc/objects/commands.cfg
 
 define command{
-command_name   check_nrpe
-command_line $user..................41.19
-
-
+    command_name    check_nrPE
+    command_line    $USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG1$
 }
 
 
