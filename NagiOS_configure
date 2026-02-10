@@ -1,6 +1,9 @@
 nagiOS server configuration
 
 *******************************************************************************************************************
+vim /etc/hosts (add all machine)
+
+*******************************************************************************************************************
 
 🔹 Permanent (Survives Reboot) ✅
 
@@ -40,12 +43,12 @@ git clone https://github.com/NagiosEnterprises/nagioscore.git
 cd nagioscore
 
 4️⃣ Compile & Install Nagios
-./configure --with-command-group=nagcmd
+./configure                                               --with-command-group=nagcmd
 
 make all
 
 
-make install-groups-users (groupadd -r nagios     useradd -g nagios nagios )
+make install-groups-users                             ---(groupadd -r nagios     useradd -g nagios nagios )
 usermod -aG nagios apache
 
 
@@ -137,8 +140,7 @@ vim /etc/hosts
 
 
 🔹 Permanent (Survives Reboot) ✅
-
-method=2:--
+method=:--
 Sed -i 's/SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config && setenforce 0
 
 
@@ -159,7 +161,7 @@ wget https://github.com/NagiosEnterprises/nrpe/releases/download/nrpe-4.1.0/nrpe
 tar -xvf nrpe-4.1.0.tar.gz
 
 cd nrpe
-./configure
+./configure --enable-command-args
 
 
 compilation:--
@@ -237,8 +239,8 @@ kiya monitor karna hai set here:---
 vim /usr/local/nagios/etc/objects/commands.cfg
 
 define command{
-    command_name    check_nrPE
-    command_line    $USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG1$
+    command_name    check_ping
+    command_line    $USER1$/check_ping -H $HOSTADDRESS$ -w 100.0,20% -c 200.0,50% -p 5
 }
 
 
