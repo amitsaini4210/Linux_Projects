@@ -183,7 +183,7 @@ make install-config
 update services file:--
 sh -c "echo >> /etc/services"
 
-sh -c "sudo echo '# nagios services' >> /etc/services"
+sh -c "sudo echo '# Nagios services' >> /etc/services"
 
 
 define port:--
