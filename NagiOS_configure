@@ -148,7 +148,20 @@ dnf update -y
 
 
 dnf install -y gcc glibc glibc-common openssl openssl-devel perl wget
+*****************************************************************************************
+----------Create the EPEL 7 repo file manually
 
+[epel]
+name=Extra Packages for Enterprise Linux 7 - \$basearch
+baseurl=https://archives.fedoraproject.org/pub/archive/epel/7/\$basearch
+enabled=1
+gpgcheck=0
+
+
+yum clean all
+yum repolist
+yum install nagios-plugins-all
+*****************************************************************************************
 
 not important do any location 
 cd /usr/src
