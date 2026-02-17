@@ -14,288 +14,350 @@ dnf update -y
 *******************************************************************************************************************
 1️⃣ Install Nagios Server (RHEL)
 
-dnf install @php @perl @httpd wget unzip glibc automake glibc-common
-gettext autoconf php php-cli gcc gd gd-devel net-snmp openssl-devel 
-unzip net-snmp postfix net-snmp-utils -y
+dnf install -y gcc glibc glibc-common perl httpd php wget gd gd-devel
 
 
-sestatus
+systemctl start httpd
+systemctl enable httpd
+systemctl status httpd
 
 
+--------some development tools reqired for istallation
 dnf groupinstall "Development Tools" -y   (for compilation)
 
 
-systemctl enable --now httpd php-fpm
+------Downloading, Compiling and Installing Nagios Core
 
-systemctl status httpd php-fpm
+wget -O nagioscore.tar.gz https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.3.tar.gz
+tar xzf nagioscore.tar.gz
+cd nagioscore-nagios-4.4.3/
 
-******************************************************************************************************************************
-if install any speciific version
-export VER="4.4.6"
-Download & Install Nagios Core:--
-link=1:--
-curl -SL https://github.com/NagiosEnterprises/nagioscore /releases/download/nagios- $VER/nagios - $VER.tar.gz | tar -xzf -
-
-
-Link=2:--
-cd /tmp
-git clone https://github.com/NagiosEnterprises/nagioscore.git
-cd nagioscore
-
-4️⃣ Compile & Install Nagios
-./configure                                               --with-command-group=nagcmd
-
+-------- configure the source package
+./configure
 make all
 
+--------create the Nagios User and Group, and add the Apache user to the Nagios Group
+make install-groups-users
+usermod -a -G nagios apache
 
-make install-groups-users                             ---(groupadd -r nagios     useradd -g nagios nagios )
-usermod -aG nagios apache
-
-
-
-4️⃣ Compile & Install Nagios
-install nagios base:
+------- install the binary files, CGIs, and HTML files
 make install
-
-
-set services for boot time:--
 make install-daemoninit
-
-
-set permission on groups:--
-make install-commandmode
-
-
-for configuration:--
-make install-config
-
-for access in web browser:--
-make install-webconf
-
-
-use for nagios web interface:---
-make install-exfoliation
-
-
-make install-classicui
+make install-commandmode		   #installs and configures the external command file
+make install-config			       #installs the *SAMPLE* configuration files.  
+make install-webconf		        #installs the Apache web server configuration files.
 
 
 
-set password for nagios admin:--
+-------Nagios Core web console using HTTP basic authentication.
 htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
 
 
 
-systemctl restart httpd 
+------Installing Nagio Plugins in RHEL 8
+dnf install -y gcc glibc glibc-common make gettext automake autoconf wget openssl-devel net-snmp net-snmp-utils
 
 
-
-change location cd ~
-
-
-if install any specific version
-VER="2.3.3"
-
-
-2️⃣ Install Nagios Plugins
-link=1:--
-VER="2.3.3"
-curl -SL https://github.com/nagios-plugins/nagios-plugins/releases/download/release-$VER/nagios-plugins-$VER.tar.gz | tar -xzf
-
-Link=2:---
-cd /tmp
-wget https://nagios-plugins.org/download/nagios-plugins-2.4.6.tar.gz
-tar -xzf nagios-plugins-*.tar.gz
-cd nagios-plugins-*
-./configure --with-nagios-user=nagios --with-nagios-group=nagios
-
-
-
+wget --no-check-certificate -O nagios-plugins.tar.gz https://github.com/nagios-plugins/nagios-plugins/archive/release-2.2.1.tar.gz
+tar zxf nagios-plugins.tar.gz
+cd nagios-plugins-release-2.2.1/
+./tools/setup
+./configure
 make
 make install
 
 
-verify installtion:--
-/usr/local/nagios/bin/nagios  -v /usr/local/nagios/etc/nagios.cfg
+systemctl restart httpd.service
+systemctl start nagios.service
+systemctl enable nagios.service
+systemctl status nagios.service
 
-
-systemctl enable --now nagios
-
-systemctl status nagios
-
-
-
-firewall-cmd --permanent --add-services={http,https}
+--------- If you have firewall running, you need to open port 80 in the firewall.
+firewall-cmd --permanent --zone=public --add-port=80/tcp
 firewall-cmd --reload
 
+----------Accessing Nagios Web Console in RHEL
+http://server-ip/nagios
 
-in webbrowser:--
-<serverip>/nagios
 
-******************************************************************************************************************************************************************************************************************************************
 
-nagios client setup
+
+
+
+
+
+
+****************************************************************************************************************************************    
+
+ --------------------Add Linux Host to Nagios Monitoring Server Using NRPE Plugin
 
 vim /etc/hosts
 
-
 🔹 Permanent (Survives Reboot) ✅
-method=:--
 Sed -i 's/SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config && setenforce 0
 
 
-dnf update -y
+
+------Install Required Dependencies
+ yum install -y gcc glibc glibc-common gd gd-devel make net-snmp openssl-devel tar wget
 
 
-dnf install -y gcc glibc glibc-common openssl openssl-devel perl wget
-*****************************************************************************************
-----------Create the EPEL 7 repo file manually
 
-[epel]
-name=Extra Packages for Enterprise Linux 7 - \$basearch
-baseurl=https://archives.fedoraproject.org/pub/archive/epel/7/\$basearch
-enabled=1
-gpgcheck=0
+---Create Nagios User
+useradd nagios
+passwd nagios
 
 
-yum clean all
-yum repolist
-yum install nagios-plugins-all
-*****************************************************************************************
-
-not important do any location 
-cd /usr/src
-
-
-✅ How to download and install EPEL-Release for RHEL 7
-sudo yum install https://archives.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm
-
-wget https://github.com/NagiosEnterprises/nrpe/releases/download/nrpe-4.1.0/nrpe-4.1.0.tar.gz
-tar -xvf nrpe-4.1.0.tar.gz
-
-cd nrpe
-./configure --enable-command-args
-
-
-compilation:--
-make all
-
-
-make install-groups-users
-groupadd -r nagios
-useradd -r -g nagios nagios
-
-
+--Install the Nagios Plugins
+mkdir /root/nagios
+cd /root/nagios
+wget https://nagios-plugins.org/download/nagios-plugins-2.3.3.tar.gz
+tar -xvf nagios-plugins-2.3.3.tar.gz
+cd nagios-plugins-2.3.3
+./configure 
+make
 make install
+chown nagios.nagios /usr/local/nagios
+chown -R nagios.nagios /usr/local/nagios/libexec
 
 
+
+--------------Installing NRPE Plugin
+
+cd /root/nagios
+wget https://github.com/NagiosEnterprises/nrpe/releases/download/nrpe-4.0.2/nrpe-4.0.2.tar.gz
+tar xzf nrpe-4.0.2.tar.gz
+cd nrpe-4.0.2
+./configure
+make all
+make install-plugin
+make install-daemon
 make install-config
 
-
-
-update services file:--
-sh -c "echo >> /etc/services"
-
-sh -c "sudo echo '# Nagios services' >> /etc/services"
-
-
-define port:--
-sh -c "sudo echo 'nrpe 5666/tcp' >> /etc/services"
-
-
-
+-------Install the NRPE daemon under systemd as a service.
 make install-init
 
 
-systemctl enable nrpe
-
-
-vim /usr/local/nagios/etc/nrpe.conf
-
-allowed_hosts=127.0.0.1  ,192.168.0.6
+---------Configuring NRPE Plugin
+vim  /usr/local/nagios/etc/nrpe.cfg
+allowed_hosts=127.0.0.1,<server-ip>
 dont_blame-nrpe=1
 
 
-uncomment lines:--    MISC system metrics    --all line
-uncomment lines:--    Generic services    --all line
-uncomment lines:--    system updates    --all line
-uncomment lines:--    processes   --all line
-uncomment lines:--    open files    --all line
-uncomment lines:--    network connections    --all line
+
+systemctl enable nrpe
+systemctl restart nrpe
+
+---------------Open NRPE Port in Firewall
+
+firewall-cmd --zone=public --add-port=5666/tcp
+firewall-cmd --zone=public --add-port=5666/tcp --permanent
+
+
+-------------Verify NRPE Daemon Locally
+netstat -tunlp | grep 5666
+
+
+-----------verify the NRPE daemon is functioning properly
+/usr/local/nagios/libexec/check_nrpe -H 127.0.0.1
+
+
+----------------Customize NRPE Commands
+vim /usr/local/nagios/etc/nrpe.cfg
+
+command [check_users]=/usr/local/nagios/libexec/check_users -w 5 -c 10
+command [check_load]=/usr/local/nagios/libexec/check_load -r -w .15, .10, .05 -c .30,.25, .20
+command [check_hd]=/usr/local/nagios/libexec/check_disk -w 20% - 10% -p /
+command [check_zombie_procs]=/usr/local/nagios/libexec/check_procs -w 5 -c 10 -s Z 
+command [check_total_procs]=/usr/local/nagios/libexec/check_procs -w 150 -c 200
+command [check_dns]=/usr/local/nagios/libexec/check_dns -H google.com -S 127.0.0.1 -t 5
+command [check_http]=/usr/local/nagios/libexec/check_http -H 127.0.0.1 -p 80
+command [check_ftp]=/usr/local/nagios/libexec/check_ftp -H 127.0.0.1 -p 21
+command [check_ssh]=/usr/local/nagios/libexec/check_ssh -H 127.0.0.1 -p 22
+command [check_ping]=/usr/local/nagios/libexec/check_ping -H 127.0.0.1 -w 100.0,20% -c 5 00.0,60%
+command [check_swap]=/usr/local/nagios/libexec/check_swap -w 20% -c 10% -av
+command [check_mem.pl]=/usr/local/nagios/libexec/check_mem.pl -f -w 20 -c 10
 
 
 
-firewall-cmd --permanent --add-port=5666/tcp
-firewall-cmd --reload
+-----------------check locally is working or not
+
+/usr/local/nagios/libexec/check_nrpe -H 127.0.0.1 -c check_users
+USERS OK - 1 users currently logged in |users=1;5;10;0
 
 
-systemctl start nrpe
-
-*******************************************************************************************************************
-back to server
 
 
-mkdir /usr/local/nagios/etc/servers
 
 
-chown -R nagios:nagios  /usr/local/nagios/etc/servers
+
+---------------------------------------------Installing NRPE On Nagios Monitoring Server---------------------------------------------------------------------------------------
+---------------------------------------------------------------Install NRPE Plugin in Nagios
+mkdir /root/nagios
+cd /root/nagios
+wget https://github.com/NagiosEnterprises/nrpe/releases/download/nrpe-4.0.2/nrpe-4.0.2.tar.gz
+tar xzf nrpe-4.0.2.tar.gz
+cd nrpe-4.0.2
+./configure
+make all
+make install-plugin
+make install-daemon
+make install-init
 
 
-chmod g+w /usr/local/nagios/etc/servers
+---------------Verify NRPE Daemon Remotely
+/usr/local/nagios/libexec/check_nrpe -H  <remote_linux_ip_address>
+
+
+
+---------------------Adding Remote Linux Host to Nagios Monitoring Server
+----------Creating Nagios Host and Services File
+cd /usr/local/nagios/etc/
+touch hosts.cfg
+touch services.cfg
 
 vim /usr/local/nagios/etc/nagios.cfg
 
-cfg_dir =/usr/local/nagios/etc/servers         --uncomment
-
-
-kiya monitor karna hai set here:---
-vim /usr/local/nagios/etc/objects/commands.cfg
-
-define command{
-    command_name    check_nrpe
-    command_line    $USER1$/check_nrpe -H $HOSTADDRESS$ -t 30 -c $ARG1$
-}
+cfg_file=/usr/local/nagios/etc/hosts.cfg                   --uncomment this lines
+cfg_file=/usr/local/nagios/etc/services.cfg                 --uncomment this lines
 
 
 
-vim /usr/local/nagios/etc/servers/yourhost.cfg
+-----------Configuring Nagios Host and Services File
+vim /usr/local/nagios/etc/hosts.cfg
 
 define host { 
-
-use linux-server
-host_name nagiosclient.nehraclasses.local
-alias My client server
-address 192.168.1.16
+use linux-client
+host_name station2.example.com
+alias station2
+address 192.168.0.2
 max_check_attempts 5 
 check_period 24x7
 notification_interval 30
 notification_period 24x7
 }
 
-define service{
-use generic-service
-host_name nagiosclient.nehraclasses.local
-service_description PING
-check_command check_ping! 200.0,20%! 400.0,90%
-}
 
-define service {
-use generic-service
-host_name nagiosclient.nehraclasses.local 
-service_description Current Users
-check_command check_nrpe! check_users!-a '-w 5 -c 10'
-}
+vim /usr/local/nagios/etc/services.cfg
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     CPU Load
+        check_command           check_nrpe!check_load
+        }
 
 define service{
-use generic-service
-host_name nagiosclient.nehraclasses.local
-service_description Root / Partition
-check_command check_nrpe!check_root
-}
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     Total Processes
+        check_command           check_nrpe!check_total_procs
+        }
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     Current Users
+        check_command           check_nrpe!check_users
+        }
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     SSH Monitoring
+        check_command           check_nrpe!check_ssh
+        }
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     FTP Monitoring
+        check_command           check_nrpe!check_ftp
+        }
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     check hd
+        check_command           check_nrpe!check_hd
+        }
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     check mem
+        check_command           check_nrpe!check_mem.pl
+        }
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     check DNS
+        check_command           check_nrpe!check_dns
+        }
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     Fcheck Http
+        check_command           check_nrpe!check_http
+        }
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     check ping
+        check_command           check_nrpe!check_ping
+        }
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     check swap
+        check_command           check_nrpe!check_swap
+        }
+
+
+define service{
+        use                     generic-service
+        host_name               station2.example.com
+        service_description     check zombie procs
+        check_command           check_nrpe!check_zombie_procs
+        }
 
 
 
-systemctl restart ngios
+-------Configuring NRPE Command Definition
+vim /usr/local/nagios/etc/objects/commands.cfg
+define command{
+        command_name check_nrpe
+        command_line $USER1$/check_nrpe -H $HOSTADDRESS$ -c $ARG1$
+        }
+
+
+
+----Finally, verify Nagios Configuration files for any errors.
+/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+Total Warnings: 0
+Total Errors:   0
+
+
+systemctl restart nagios
+
+
+
+
+
+
+-----------------------install check_mem.pl externally from web
+wget https://raw.githubusercontent.com/justintime/nagios-plugins/master/check_mem/check_mem.pl
+
+chmod +x check_mem.pl
+./check_mem.pl
+
+
+
+
+
 
 
 
