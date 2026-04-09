@@ -52,10 +52,12 @@ vim log_cleanup.sh
 
 #!/bin/bash
 
-LOG_PATH="/var/log"
-find $LOG_PATH -type f -name "*.log" -mtime +7 -exec rm -f {} \;
+LOG_DIR="/var/log"
+DAYS=7
 
-echo "Old logs cleaned on $(date)" >> /var/log/log_cleanup.log
+find $LOG_DIR -type f -name "*.log" -mtime +$DAYS -exec rm -f {} \;
+
+echo "Old logs deleted older than $DAYS days" >> /var/log/cleanup.log
 
 ⏰ Cron Job
 0 3 * * * /bin/bash /root/scripts/log_cleanup.sh
