@@ -2,8 +2,8 @@
 
 *********************************************************************************************************
 Scenario
-Website 1 → site1.com
-Website 2 → site2.com
+# Website 1 → site1.com
+# Website 2 → site2.com
 Both hosted on same Apache server
 IP-based or Name-based Virtual Hosting (Name-based used)
 *********************************************************************************************************
